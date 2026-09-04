@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal de Pedidos — Marea Negra × Variante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #17181a;
+    --paper: #eae6db;
+    --paper-raised: #f4f1e8;
+    --sand-line: #d6d0bf;
+    --text: #1c1b17;
+    --text-soft: #5b574c;
+    --teal: #1f5c56;
+    --teal-soft: #dde9e5;
+    --teal-ink: #123b37;
+    --copper: #b9722f;
+    --copper-soft: #f0e2ce;
+    --copper-ink: #7a4a1c;
+    --good: #3f7d53;
+    --good-soft: #dfeee2;
+    --warn: #a5761f;
+    --warn-soft: #f3e7cd;
+    --crit: #a8453b;
+    --crit-soft: #f5dfda;
+    --focus: #2f6e6a;
+    --shadow: 0 1px 2px rgba(23,24,26,0.06), 0 8px 24px -12px rgba(23,24,26,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #eae6db; --paper: #15181a; --paper-raised: #1d2124; --sand-line: #33383a;
+      --text: #eae6db; --text-soft: #a3a099; --teal: #4fa79e; --teal-soft: #1c2f2d; --teal-ink: #a9d8d1;
+      --copper: #dc9a55; --copper-soft: #2c2318; --copper-ink: #ecc084;
+      --good: #6fbf85; --good-soft: #1c2b1f; --warn: #d9ac53; --warn-soft: #2c2517;
+      --crit: #e0847a; --crit-soft: #2f1e1c; --focus: #6fc2ba;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #eae6db; --paper: #15181a; --paper-raised: #1d2124; --sand-line: #33383a;
+    --text: #eae6db; --text-soft: #a3a099; --teal: #4fa79e; --teal-soft: #1c2f2d; --teal-ink: #a9d8d1;
+    --copper: #dc9a55; --copper-soft: #2c2318; --copper-ink: #ecc084;
+    --good: #6fbf85; --good-soft: #1c2b1f; --warn: #d9ac53; --warn-soft: #2c2517;
+    --crit: #e0847a; --crit-soft: #2f1e1c; --focus: #6fc2ba;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--text); font-family: "IBM Plex Sans", system-ui, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  a { color: inherit; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px 96px; }
+
+  .setup-banner {
+    background: var(--crit-soft);
+    color: var(--crit);
+    border-bottom: 1px solid var(--crit);
+    padding: 12px 16px;
+    font-size: 0.84rem;
+    text-align: center;
+    display: none;
+  }
+  .setup-banner.show { display: block; }
+
+  header { padding: 40px 0 24px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--sand-line); margin-bottom: 28px; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-soft); display: flex; align-items: center; gap: 10px; }
+  .eyebrow .dot { color: var(--teal); }
+  .eyebrow .dot2 { color: var(--copper); }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(1.8rem, 5vw, 2.4rem); margin: 2px 0 0; text-wrap: balance; }
+  header p { margin: 4px 0 0; color: var(--text-soft); max-width: 60ch; font-size: 0.98rem; }
+
+  .card { background: var(--paper-raised); border: 1px solid var(--sand-line); border-radius: 10px; padding: 22px; margin-bottom: 24px; }
+  .section-title { font-family: "Fraunces", Georgia, serif; font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; }
+  .section-sub { color: var(--text-soft); font-size: 0.88rem; margin: 0 0 18px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-soft); }
+  select, input[type="text"], input[type="tel"], input[type="email"], input[type="date"], textarea {
+    font-family: inherit; font-size: 0.95rem; color: var(--text); background: var(--paper);
+    border: 1px solid var(--sand-line); border-radius: 7px; padding: 10px 12px; width: 100%;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+
+  .brand-group { margin-top: 28px; }
+  .brand-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .brand-swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .brand-name { font-family: "Fraunces", Georgia, serif; font-size: 1.1rem; font-weight: 600; }
+  .brand-tag { font-size: 0.78rem; color: var(--text-soft); }
+  .product-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+
+  .product { border: 1px solid var(--sand-line); border-radius: 9px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; background: var(--paper); }
+  .product-name { font-weight: 600; font-size: 0.95rem; }
+  .product-meta { font-size: 0.82rem; color: var(--text-soft); margin-top: 2px; }
+
+  .badge { font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 100px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .badge.good { background: var(--good-soft); color: var(--good); }
+  .badge.crit { background: var(--crit-soft); color: var(--crit); }
+  .badge::before { content: "●"; font-size: 0.55rem; }
+
+  .product-options { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .opt-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opt-btn { font-family: inherit; font-size: 0.8rem; background: var(--paper-raised); border: 1px solid var(--sand-line); border-radius: 6px; padding: 5px 10px; cursor: pointer; color: var(--text); }
+  .opt-btn.selected { border-color: var(--teal); background: var(--teal-soft); color: var(--teal-ink); font-weight: 600; }
+  .product.brand-copper .opt-btn.selected { border-color: var(--copper); background: var(--copper-soft); color: var(--copper-ink); }
+  .opt-select { max-width: 200px; }
+
+  .add-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .qty-stepper { display: flex; align-items: center; border: 1px solid var(--sand-line); border-radius: 7px; overflow: hidden; }
+  .qty-stepper button { background: var(--paper-raised); border: none; width: 28px; height: 30px; font-size: 1rem; cursor: pointer; color: var(--text); }
+  .qty-stepper span { width: 28px; text-align: center; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size: 0.88rem; }
+
+  .btn { font-family: inherit; font-weight: 600; font-size: 0.88rem; border-radius: 7px; padding: 8px 16px; border: 1px solid transparent; cursor: pointer; }
+  .btn-teal { background: var(--teal); color: #fdfdfb; }
+  .btn-teal:hover { background: var(--teal-ink); }
+  .btn-copper { background: var(--copper); color: #fdfdfb; }
+  .btn-copper:hover { background: var(--copper-ink); }
+  .btn-full { width: 100%; padding: 13px; font-size: 0.98rem; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .cart-empty { color: var(--text-soft); font-size: 0.88rem; padding: 4px 0; }
+  .cart-item { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sand-line); font-size: 0.86rem; }
+  .cart-item:last-child { border-bottom: none; }
+  .cart-item-name { font-weight: 600; }
+  .cart-item-meta { color: var(--text-soft); font-size: 0.78rem; margin-top: 2px; }
+  .cart-item-remove { background: none; border: none; color: var(--crit); font-size: 0.78rem; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+  .confirm-box { background: var(--good-soft); border: 1px solid var(--good); border-radius: 9px; padding: 18px; font-size: 0.9rem; color: var(--text); margin-top: 16px; display: none; }
+  .confirm-box.show { display: block; }
+  .confirm-box strong { color: var(--good); }
+
+  .error-box { background: var(--crit-soft); border: 1px solid var(--crit); border-radius: 9px; padding: 14px; font-size: 0.86rem; color: var(--crit); margin-top: 14px; display: none; }
+  .error-box.show { display: block; }
+
+  footer.note { margin-top: 40px; font-size: 0.8rem; color: var(--text-soft); border-top: 1px solid var(--sand-line); padding-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="setup-banner" id="setupBanner">Este portal aún no está conectado a la base de datos — falta pegar la configuración de Firebase en el archivo. Ver instrucciones adjuntas.</div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="dot">●</span> Marea Negra <span class="dot2">●</span> Variante</div>
+    <h1>Haz tu pedido</h1>
+    <p>Llena tus datos, arma tu pedido y da enviar — lo recibimos directo.</p>
+  </header>
+
+  <div class="card">
+    <p class="section-title">Tus datos</p>
+    <p class="section-sub">Los usamos solo para este pedido y para contactarte si hace falta.</p>
+    <div class="field">
+      <label for="ncName">Nombre / empresa</label>
+      <input type="text" id="ncName" placeholder="Ej. Café Alameda" autocomplete="name">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="ncPhone">Teléfono</label>
+        <input type="tel" id="ncPhone" placeholder="55 0000 0000" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label for="ncEmail">Correo (opcional)</label>
+        <input type="email" id="ncEmail" placeholder="tu@correo.com" autocomplete="email">
+      </div>
+    </div>
+    <div class="field">
+      <label for="ncAddr">Dirección de entrega</label>
+      <input type="text" id="ncAddr" placeholder="Calle, número, colonia, ciudad" autocomplete="street-address">
+    </div>
+  </div>
+
+  <div class="brand-group" style="margin-top:0;">
+    <div class="brand-head">
+      <span class="brand-swatch" style="background:var(--teal)"></span>
+      <span class="brand-name">Marea Negra</span>
+      <span class="brand-tag">cold brew &amp; licor de café</span>
+    </div>
+    <div class="product-list" id="listMarea"></div>
+  </div>
+
+  <div class="brand-group">
+    <div class="brand-head">
+      <span class="brand-swatch" style="background:var(--copper)"></span>
+      <span class="brand-name">Variante</span>
+      <span class="brand-tag">café tostado</span>
+    </div>
+    <div class="product-list" id="listVariante"></div>
+  </div>
+
+  <div class="card" style="margin-top:28px;">
+    <p class="section-title">Tu pedido</p>
+    <div id="cartItems"><p class="cart-empty">Aún no agregas artículos.</p></div>
+
+    <div class="field" style="margin-top:16px;">
+      <label for="reqDate">Día en que lo necesitas</label>
+      <input type="date" id="reqDate">
+    </div>
+    <div class="field">
+      <label for="notes">Observaciones (opcional)</label>
+      <textarea id="notes" placeholder="Ej. dejar con el portero, tocar timbre 2, etc."></textarea>
+    </div>
+
+    <button class="btn btn-teal btn-full" id="submitOrder" type="button">Enviar pedido</button>
+
+    <div class="confirm-box" id="confirmBox">
+      <strong>¡Pedido recibido!</strong>
+      <div id="confirmDetail" style="margin-top:6px;"></div>
+    </div>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <footer class="note">Marea Negra × Variante — pedidos.</footer>
+</div>
+
+<!-- Firebase (SDK "compat", carga simple sin bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ============================================================
+  // PASO 1: pega aquí la configuración de tu proyecto Firebase.
+  // La obtienes en la consola de Firebase → Configuración del
+  // proyecto → tus apps → app web → "Config". Ver instrucciones
+  // adjuntas (SETUP.md) para el paso a paso completo.
+  // ============================================================
+  var firebaseConfig = {
+    apiKey: "AIzaSyBrkSgKaydtDTQ8a4cxRQr65KSIC8hKFVw",
+    authDomain: "portal-pedidos-ebd9c.firebaseapp.com",
+    projectId: "portal-pedidos-ebd9c",
+    storageBucket: "portal-pedidos-ebd9c.firebasestorage.app",
+    messagingSenderId: "9955667634",
+    appId: "1:9955667634:web:b8b69e2f91196064ba23ab"
+  };
+
+  var configured = firebaseConfig.apiKey.indexOf("PEGA_AQUI") === -1;
+  var db = null;
+  if (configured) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } else {
+    document.getElementById("setupBanner").classList.add("show");
+  }
+
+  var MOLIENDAS = ["Espresso", "V60 / Filtro", "Prensa francesa", "Moka"];
+
+  var PRODUCTS = [
+    { id: "garrafa5", brand: "marea", name: "Garrafa 5 L", meta: "Cold brew · concentrado", unit: "garrafa" },
+    { id: "bolsa1l", brand: "marea", name: "Bolsa 1 L", meta: "Cold brew", unit: "bolsa" },
+    { id: "lata350-natural", brand: "marea", name: "Lata 350 ml — Natural", meta: "Cold brew", unit: "lata" },
+    { id: "lata350-vainilla", brand: "marea", name: "Lata 350 ml — Vainilla", meta: "Cold brew", unit: "lata" },
+    { id: "licor", brand: "marea", name: "Licor de café", meta: "Botella", unit: "botella" },
+    { id: "casa1kg", brand: "variante", name: "Café de la casa — Bolsa 1 kg", meta: "Tolva · grano o molido", hasGrind: true, unit: "bolsa" },
+    { id: "casa250", brand: "variante", name: "Café de la casa — Bolsa 250 g", meta: "Tolva · grano o molido", hasGrind: true, unit: "bolsa" },
+    { id: "esp250", brand: "variante", name: "Café de especialidad — 250 g", meta: "Lote especial · grano o molido", hasGrind: true, unit: "bolsa" }
+  ];
+
+  // Disponibilidad: por defecto todo disponible; se actualiza en vivo
+  // desde /config/stock si Firebase está conectado (lo controla el tablero interno).
+  var stock = {};
+  PRODUCTS.forEach(function (p) { stock[p.id] = true; });
+
+  var cart = [];
+  var cartSeq = 0;
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function renderProducts() {
+    var listMarea = document.getElementById("listMarea");
+    var listVariante = document.getElementById("listVariante");
+    listMarea.innerHTML = "";
+    listVariante.innerHTML = "";
+
+    PRODUCTS.forEach(function (p) {
+      var wrap = el("div", "product" + (p.brand === "variante" ? " brand-copper" : ""));
+      var head = el("div");
+      head.appendChild(el("div", "product-name", p.name));
+      head.appendChild(el("div", "product-meta", p.meta));
+      wrap.appendChild(head);
+
+      var available = stock[p.id] !== false;
+      wrap.appendChild(el("span", "badge " + (available ? "good" : "crit"), available ? "Disponible" : "Agotado por temporada"));
+
+      var optRow = el("div", "product-options");
+      var state = { form: "Grano", grind: MOLIENDAS[0] };
+      var grindSelect;
+
+      if (p.hasGrind) {
+        var formGroup = el("div", "opt-group");
+        ["Grano", "Molido"].forEach(function (f) {
+          var b = el("button", "opt-btn" + (f === state.form ? " selected" : ""), f);
+          b.type = "button";
+          b.addEventListener("click", function () {
+            state.form = f;
+            formGroup.querySelectorAll(".opt-btn").forEach(function (x) { x.classList.remove("selected"); });
+            b.classList.add("selected");
+            grindSelect.style.display = f === "Molido" ? "" : "none";
+          });
+          formGroup.appendChild(b);
+        });
+        optRow.appendChild(formGroup);
+
+        grindSelect = el("select", "opt-select");
+        grindSelect.style.display = "none";
+        MOLIENDAS.forEach(function (m) {
+          var o = el("option", null, m);
+          o.value = m;
+          grindSelect.appendChild(o);
+        });
+        grindSelect.addEventListener("change", function () { state.grind = grindSelect.value; });
+        optRow.appendChild(grindSelect);
+      }
+
+      wrap.appendChild(optRow);
+
+      var addRow = el("div", "add-row");
+      var qty = 1;
+      var stepper = el("div", "qty-stepper");
+      var minus = el("button", null, "−"); minus.type = "button";
+      var qtyLabel = el("span", null, String(qty));
+      var plus = el("button", null, "+"); plus.type = "button";
+      minus.addEventListener("click", function () { qty = Math.max(1, qty - 1); qtyLabel.textContent = qty; });
+      plus.addEventListener("click", function () { qty = Math.min(99, qty + 1); qtyLabel.textContent = qty; });
+      stepper.appendChild(minus); stepper.appendChild(qtyLabel); stepper.appendChild(plus);
+      addRow.appendChild(stepper);
+
+      var addBtn = el("button", "btn " + (p.brand === "variante" ? "btn-copper" : "btn-teal"), "Agregar");
+      addBtn.type = "button";
+      if (!available) addBtn.disabled = true;
+      addBtn.addEventListener("click", function () {
+        var metaParts = [];
+        if (p.hasGrind) metaParts.push(state.form + (state.form === "Molido" ? " · " + state.grind : ""));
+        cart.push({ key: ++cartSeq, name: p.name, meta: metaParts.join(" · "), qty: qty });
+        renderCart();
+      });
+      addRow.appendChild(addBtn);
+      wrap.appendChild(addRow);
+
+      (p.brand === "marea" ? listMarea : listVariante).appendChild(wrap);
+    });
+  }
+
+  function renderCart() {
+    var box = document.getElementById("cartItems");
+    box.innerHTML = "";
+    if (cart.length === 0) {
+      box.appendChild(el("p", "cart-empty", "Aún no agregas artículos."));
+      return;
+    }
+    cart.forEach(function (item) {
+      var row = el("div", "cart-item");
+      var left = el("div");
+      left.appendChild(el("div", "cart-item-name", item.qty + "× " + item.name));
+      if (item.meta) left.appendChild(el("div", "cart-item-meta", item.meta));
+      row.appendChild(left);
+      var rm = el("button", "cart-item-remove", "quitar");
+      rm.type = "button";
+      rm.addEventListener("click", function () {
+        cart = cart.filter(function (c) { return c.key !== item.key; });
+        renderCart();
+      });
+      row.appendChild(rm);
+      box.appendChild(row);
+    });
+  }
+
+  // Recordar los datos del cliente en este navegador para la próxima vez (conveniencia, no compartido).
+  function loadRemembered() {
+    try {
+      var saved = JSON.parse(localStorage.getItem("marea-mis-datos") || "null");
+      if (saved) {
+        document.getElementById("ncName").value = saved.nombre || "";
+        document.getElementById("ncPhone").value = saved.telefono || "";
+        document.getElementById("ncEmail").value = saved.correo || "";
+        document.getElementById("ncAddr").value = saved.direccion || "";
+      }
+    } catch (e) { /* sin localStorage, no pasa nada */ }
+  }
+  function remember(data) {
+    try { localStorage.setItem("marea-mis-datos", JSON.stringify(data)); } catch (e) { /* ignorar */ }
+  }
+
+  document.getElementById("submitOrder").addEventListener("click", function () {
+    var errorBox = document.getElementById("errorBox");
+    errorBox.classList.remove("show");
+
+    var nombre = document.getElementById("ncName").value.trim();
+    var telefono = document.getElementById("ncPhone").value.trim();
+    var correo = document.getElementById("ncEmail").value.trim();
+    var direccion = document.getElementById("ncAddr").value.trim();
+    var fecha = document.getElementById("reqDate").value;
+    var observaciones = document.getElementById("notes").value.trim();
+
+    if (!nombre || !telefono || !direccion) {
+      errorBox.textContent = "Completa nombre, teléfono y dirección antes de enviar.";
+      errorBox.classList.add("show");
+      return;
+    }
+    if (cart.length === 0) {
+      errorBox.textContent = "Agrega al menos un artículo a tu pedido.";
+      errorBox.classList.add("show");
+      return;
+    }
+    if (!configured) {
+      errorBox.textContent = "Este portal todavía no está conectado — avísale a Marea Negra que falta terminar la configuración.";
+      errorBox.classList.add("show");
+      return;
+    }
+
+    var submitBtn = document.getElementById("submitOrder");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enviando…";
+
+    var order = {
+      cliente: { nombre: nombre, telefono: telefono, correo: correo, direccion: direccion },
+      fecha: fecha,
+      observaciones: observaciones,
+      items: cart.map(function (c) { return { producto: c.name, cantidad: c.qty, meta: c.meta }; }),
+      estado: "pendiente",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    db.collection("orders").add(order).then(function () {
+      remember({ nombre: nombre, telefono: telefono, correo: correo, direccion: direccion });
+      document.getElementById("confirmDetail").innerHTML =
+        "Gracias, " + nombre + ". Registramos " + cart.length + " artículo(s)" + (fecha ? " para el " + fecha : "") + ". Te contactamos si hace falta algo.";
+      document.getElementById("confirmBox").classList.add("show");
+      cart = [];
+      renderCart();
+      document.getElementById("notes").value = "";
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Enviar pedido";
+    }).catch(function (err) {
+      errorBox.textContent = "No se pudo enviar el pedido (" + err.message + "). Intenta de nuevo en un momento.";
+      errorBox.classList.add("show");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Enviar pedido";
+    });
+  });
+
+  // Disponibilidad en vivo — si Firebase está conectado, escucha cambios que hagan desde el tablero interno.
+  if (configured) {
+    db.collection("config").doc("stock").onSnapshot(function (snap) {
+      var data = snap.exists ? snap.data() : {};
+      PRODUCTS.forEach(function (p) { stock[p.id] = data[p.id] !== false; });
+      renderProducts();
+    }, function () { /* si falla, se queda con todo disponible por defecto */ });
+  }
+
+  loadRemembered();
+  renderProducts();
+  renderCart();
+})();
+</script>
+</body>
+</html>
