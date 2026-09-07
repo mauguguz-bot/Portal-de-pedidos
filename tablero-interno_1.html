@@ -53,6 +53,27 @@
   .section-title { font-family: "Fraunces", Georgia, serif; font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; }
   .section-sub { color: var(--text-soft); font-size: 0.88rem; margin: 0 0 18px; }
 
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-soft); }
+  select, input[type="text"] {
+    font-family: inherit; font-size: 0.95rem; color: var(--text); background: var(--paper);
+    border: 1px solid var(--sand-line); border-radius: 7px; padding: 10px 12px; width: 100%;
+  }
+  .btn-teal { background: var(--teal); color: #fdfdfb; }
+  .btn-teal:hover { background: var(--teal-ink); }
+
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  .product-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--sand-line); border-radius: 9px; padding: 12px 14px; background: var(--paper); margin-bottom: 8px; }
+  .product-row.inactive { opacity: 0.5; }
+  .product-row-main { display: flex; flex-direction: column; gap: 3px; }
+  .product-row-name { font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .product-row-meta { font-size: 0.78rem; color: var(--text-soft); }
+  .product-row-actions { display: flex; gap: 8px; align-items: center; flex: none; }
+  .product-brand-tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+  .product-brand-tag.marea { background: var(--teal-soft); color: var(--teal-ink); }
+  .product-brand-tag.variante { background: var(--copper-soft); color: var(--copper-ink); }
+
   .board-controls { display: flex; flex-direction: column; gap: 16px; }
   .stock-group-label { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 8px; }
   .stock-group-row { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -123,6 +144,17 @@
   </header>
 
   <div class="card">
+    <div class="card-head">
+      <div>
+        <p class="section-title" style="margin-bottom:4px;">Productos</p>
+        <p class="section-sub" style="margin-bottom:0;">Edita o agrega productos del catálogo — se reflejan al instante en el portal del cliente.</p>
+      </div>
+      <button class="btn btn-teal" id="addProductBtn" type="button">+ Agregar producto</button>
+    </div>
+    <div id="productsList" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
     <p class="section-title">Disponibilidad de temporada</p>
     <p class="section-sub">Activa o desactiva lo que no hay ahorita — se refleja al instante en el portal del cliente.</p>
     <div class="board-controls" id="stockControls"></div>
@@ -156,6 +188,40 @@
       </thead>
       <tbody id="boardBody"><tr class="empty-row"><td colspan="8">Cargando pedidos…</td></tr></tbody>
     </table>
+  </div>
+
+  <div class="copy-overlay" id="productModal">
+    <div class="copy-overlay-box">
+      <p class="section-title" id="productModalTitle" style="margin-bottom:14px;">Agregar producto</p>
+      <div class="field">
+        <label for="pfName">Nombre</label>
+        <input type="text" id="pfName" placeholder="Ej. Bolsa 500 g">
+      </div>
+      <div class="field">
+        <label for="pfBrand">Marca</label>
+        <select id="pfBrand">
+          <option value="marea">Marea Negra</option>
+          <option value="variante">Variante</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pfMeta">Descripción corta</label>
+        <input type="text" id="pfMeta" placeholder="Ej. Cold brew · concentrado">
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem; margin-bottom:10px;">
+        <input type="checkbox" id="pfGrind"> Ofrece opción grano / molido
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem;">
+        <input type="checkbox" id="pfActive" checked> Visible en el portal del cliente
+      </label>
+      <div class="copy-overlay-actions" style="justify-content:space-between;">
+        <button class="btn btn-ghost" id="pfDelete" type="button" style="display:none; color:var(--crit); border-color:var(--crit);">Eliminar</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="pfCancel" type="button">Cancelar</button>
+          <button class="btn btn-teal" id="pfSave" type="button">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="copy-overlay" id="copyOverlay">
@@ -200,21 +266,48 @@
     document.getElementById("liveDot").style.display = "none";
   }
 
-  var PRODUCTS = [
-    { id: "garrafa5", brand: "marea", name: "Garrafa 5 L" },
-    { id: "bolsa1l", brand: "marea", name: "Bolsa 1 L" },
-    { id: "lata350-natural", brand: "marea", name: "Lata 350 ml — Natural" },
-    { id: "lata350-vainilla", brand: "marea", name: "Lata 350 ml — Vainilla" },
-    { id: "licor", brand: "marea", name: "Licor de café" },
-    { id: "casa1kg", brand: "variante", name: "Café de la casa — Bolsa 1 kg" },
-    { id: "casa250", brand: "variante", name: "Café de la casa — Bolsa 250 g" },
-    { id: "esp250", brand: "variante", name: "Café de especialidad — 250 g" }
+  // El catálogo ahora vive en Firestore (colección "products") para poder
+  // editarlo desde aquí. Esta lista solo se usa UNA VEZ, para sembrar la
+  // base de datos la primera vez que se conecta (si ya tiene productos, no
+  // se toca).
+  var DEFAULT_PRODUCTS = [
+    { brand: "marea", name: "Garrafa 5 L", meta: "Cold brew · concentrado" },
+    { brand: "marea", name: "Bolsa 1 L", meta: "Cold brew" },
+    { brand: "marea", name: "Lata 350 ml — Natural", meta: "Cold brew" },
+    { brand: "marea", name: "Lata 350 ml — Vainilla", meta: "Cold brew" },
+    { brand: "marea", name: "Licor de café", meta: "Botella" },
+    { brand: "variante", name: "Café de la casa — Bolsa 1 kg", meta: "Tolva · grano o molido", hasGrind: true },
+    { brand: "variante", name: "Café de la casa — Bolsa 250 g", meta: "Tolva · grano o molido", hasGrind: true },
+    { brand: "variante", name: "Café de especialidad — 250 g", meta: "Lote especial · grano o molido", hasGrind: true }
   ];
 
+  var PRODUCTS = []; // en vivo desde Firestore
   var stock = {};
-  PRODUCTS.forEach(function (p) { stock[p.id] = true; });
+  var configStockData = {};
+
+  function recomputeStock() {
+    var next = {};
+    PRODUCTS.forEach(function (p) { next[p.id] = configStockData[p.id] !== false; });
+    stock = next;
+  }
+
+  function seedDefaultProductsIfEmpty() {
+    db.collection("products").limit(1).get().then(function (snap) {
+      if (!snap.empty) return;
+      var batch = db.batch();
+      DEFAULT_PRODUCTS.forEach(function (p) {
+        var ref = db.collection("products").doc();
+        batch.set(ref, {
+          name: p.name, brand: p.brand, meta: p.meta || "", hasGrind: !!p.hasGrind, activo: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      return batch.commit();
+    }).catch(function (err) { console.error("No se pudo sembrar el catálogo inicial:", err); });
+  }
 
   var ORDERS = []; // se llena en vivo desde Firestore
+  var editingProductId = null;
 
   function el(tag, cls, html) {
     var e = document.createElement(tag);
@@ -268,6 +361,104 @@
       box.appendChild(group);
     });
   }
+
+  // ---------- catálogo de productos ----------
+  function renderProductsList() {
+    var box = document.getElementById("productsList");
+    box.innerHTML = "";
+    if (PRODUCTS.length === 0) {
+      box.appendChild(el("p", "section-sub", "Todavía no hay productos — agrega el primero."));
+      return;
+    }
+    PRODUCTS.forEach(function (p) {
+      var row = el("div", "product-row" + (p.activo === false ? " inactive" : ""));
+      var main = el("div", "product-row-main");
+      var nameLine = el("div", "product-row-name");
+      nameLine.appendChild(document.createTextNode(p.name));
+      var tag = el("span", "product-brand-tag " + p.brand, p.brand === "marea" ? "Marea Negra" : "Variante");
+      nameLine.appendChild(tag);
+      if (p.activo === false) nameLine.appendChild(el("span", "product-brand-tag", "Oculto"));
+      main.appendChild(nameLine);
+      var metaBits = [];
+      if (p.meta) metaBits.push(p.meta);
+      if (p.hasGrind) metaBits.push("grano / molido");
+      if (metaBits.length) main.appendChild(el("div", "product-row-meta", metaBits.join(" · ")));
+      row.appendChild(main);
+
+      var actions = el("div", "product-row-actions");
+      var editBtn = el("button", "copy-cell-btn", "Editar");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function () { openProductModal(p); });
+      actions.appendChild(editBtn);
+      row.appendChild(actions);
+
+      box.appendChild(row);
+    });
+  }
+
+  function openProductModal(p) {
+    editingProductId = p ? p.id : null;
+    document.getElementById("productModalTitle").textContent = p ? "Editar producto" : "Agregar producto";
+    document.getElementById("pfName").value = p ? p.name : "";
+    document.getElementById("pfBrand").value = p ? p.brand : "marea";
+    document.getElementById("pfMeta").value = p && p.meta ? p.meta : "";
+    document.getElementById("pfGrind").checked = !!(p && p.hasGrind);
+    document.getElementById("pfActive").checked = p ? p.activo !== false : true;
+    document.getElementById("pfDelete").style.display = p ? "inline-block" : "none";
+    document.getElementById("productModal").classList.add("show");
+    document.getElementById("pfName").focus();
+  }
+
+  function closeProductModal() {
+    document.getElementById("productModal").classList.remove("show");
+    editingProductId = null;
+  }
+
+  document.getElementById("addProductBtn").addEventListener("click", function () { openProductModal(null); });
+  document.getElementById("pfCancel").addEventListener("click", closeProductModal);
+
+  document.getElementById("pfSave").addEventListener("click", function () {
+    if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
+    var name = document.getElementById("pfName").value.trim();
+    if (!name) { alert("Ponle un nombre al producto."); return; }
+    var data = {
+      name: name,
+      brand: document.getElementById("pfBrand").value,
+      meta: document.getElementById("pfMeta").value.trim(),
+      hasGrind: document.getElementById("pfGrind").checked,
+      activo: document.getElementById("pfActive").checked
+    };
+    var saveBtn = document.getElementById("pfSave");
+    saveBtn.disabled = true;
+    var promise;
+    if (editingProductId) {
+      promise = db.collection("products").doc(editingProductId).update(data);
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection("products").add(data);
+    }
+    promise.then(function () {
+      saveBtn.disabled = false;
+      closeProductModal();
+    }).catch(function (err) {
+      saveBtn.disabled = false;
+      alert("No se pudo guardar el producto: " + err.message);
+    });
+  });
+
+  document.getElementById("pfDelete").addEventListener("click", function () {
+    if (!editingProductId) return;
+    if (!confirm("¿Eliminar este producto? Ya no aparecerá en el portal del cliente.")) return;
+    var delBtn = document.getElementById("pfDelete");
+    delBtn.disabled = true;
+    db.collection("products").doc(editingProductId).delete().then(function () {
+      delBtn.disabled = false;
+      closeProductModal();
+    }).catch(function (err) {
+      delBtn.disabled = false;
+      alert("No se pudo eliminar el producto: " + err.message);
+    });
+  });
 
   // ---------- copiar hacia Marea & Tostador ----------
   function orderToRows(o) {
@@ -379,13 +570,34 @@
     });
   }
 
+  renderProductsList();
   renderStockControls();
   renderBoard();
 
   if (configured) {
+    seedDefaultProductsIfEmpty();
+
+    db.collection("products").onSnapshot(function (snap) {
+      var list = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      });
+      list.sort(function (a, b) {
+        if (a.brand !== b.brand) return a.brand === "marea" ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "");
+      });
+      PRODUCTS = list;
+      recomputeStock();
+      renderProductsList();
+      renderStockControls();
+    }, function (err) {
+      document.getElementById("productsList").innerHTML = '<p class="section-sub">Error cargando productos: ' + err.message + "</p>";
+    });
+
     db.collection("config").doc("stock").onSnapshot(function (snap) {
-      var data = snap.exists ? snap.data() : {};
-      PRODUCTS.forEach(function (p) { stock[p.id] = data[p.id] !== false; });
+      configStockData = snap.exists ? snap.data() : {};
+      recomputeStock();
       renderStockControls();
     });
 
