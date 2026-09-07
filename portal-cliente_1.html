@@ -250,21 +250,14 @@
 
   var MOLIENDAS = ["Espresso", "V60 / Filtro", "Prensa francesa", "Moka"];
 
-  var PRODUCTS = [
-    { id: "garrafa5", brand: "marea", name: "Garrafa 5 L", meta: "Cold brew · concentrado", unit: "garrafa" },
-    { id: "bolsa1l", brand: "marea", name: "Bolsa 1 L", meta: "Cold brew", unit: "bolsa" },
-    { id: "lata350-natural", brand: "marea", name: "Lata 350 ml — Natural", meta: "Cold brew", unit: "lata" },
-    { id: "lata350-vainilla", brand: "marea", name: "Lata 350 ml — Vainilla", meta: "Cold brew", unit: "lata" },
-    { id: "licor", brand: "marea", name: "Licor de café", meta: "Botella", unit: "botella" },
-    { id: "casa1kg", brand: "variante", name: "Café de la casa — Bolsa 1 kg", meta: "Tolva · grano o molido", hasGrind: true, unit: "bolsa" },
-    { id: "casa250", brand: "variante", name: "Café de la casa — Bolsa 250 g", meta: "Tolva · grano o molido", hasGrind: true, unit: "bolsa" },
-    { id: "esp250", brand: "variante", name: "Café de especialidad — 250 g", meta: "Lote especial · grano o molido", hasGrind: true, unit: "bolsa" }
-  ];
+  // El catálogo ahora vive en Firestore (colección "products") y se administra
+  // desde el tablero interno — aquí solo se lee en vivo, filtrando lo que esté
+  // marcado como visible (activo !== false).
+  var PRODUCTS = [];
 
   // Disponibilidad: por defecto todo disponible; se actualiza en vivo
   // desde /config/stock si Firebase está conectado (lo controla el tablero interno).
   var stock = {};
-  PRODUCTS.forEach(function (p) { stock[p.id] = true; });
 
   var cart = [];
   var cartSeq = 0;
@@ -281,6 +274,14 @@
     var listVariante = document.getElementById("listVariante");
     listMarea.innerHTML = "";
     listVariante.innerHTML = "";
+
+    if (PRODUCTS.length === 0) {
+      var loadingMsg = configured ? "Cargando catálogo…" : "";
+      if (loadingMsg) {
+        listMarea.appendChild(el("p", "cart-empty", loadingMsg));
+      }
+      return;
+    }
 
     PRODUCTS.forEach(function (p) {
       var wrap = el("div", "product" + (p.brand === "variante" ? " brand-copper" : ""));
@@ -449,11 +450,35 @@
     });
   });
 
-  // Disponibilidad en vivo — si Firebase está conectado, escucha cambios que hagan desde el tablero interno.
+  var configStockData = {};
+  function recomputeStock() {
+    var next = {};
+    PRODUCTS.forEach(function (p) { next[p.id] = configStockData[p.id] !== false; });
+    stock = next;
+  }
+
+  // Catálogo y disponibilidad en vivo — si Firebase está conectado, escucha
+  // cambios que hagan desde el tablero interno (productos nuevos/editados y
+  // disponibilidad de temporada).
   if (configured) {
+    db.collection("products").onSnapshot(function (snap) {
+      var list = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      }).filter(function (p) { return p.activo !== false; });
+      list.sort(function (a, b) {
+        if (a.brand !== b.brand) return a.brand === "marea" ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "");
+      });
+      PRODUCTS = list;
+      recomputeStock();
+      renderProducts();
+    }, function () { /* si falla, se queda sin catálogo visible */ });
+
     db.collection("config").doc("stock").onSnapshot(function (snap) {
-      var data = snap.exists ? snap.data() : {};
-      PRODUCTS.forEach(function (p) { stock[p.id] = data[p.id] !== false; });
+      configStockData = snap.exists ? snap.data() : {};
+      recomputeStock();
       renderProducts();
     }, function () { /* si falla, se queda con todo disponible por defecto */ });
   }

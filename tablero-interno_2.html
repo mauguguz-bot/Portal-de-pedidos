@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero Interno — Marea Negra × Variante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #17181a; --paper: #eae6db; --paper-raised: #f4f1e8; --sand-line: #d6d0bf;
+    --text: #1c1b17; --text-soft: #5b574c; --teal: #1f5c56; --teal-soft: #dde9e5; --teal-ink: #123b37;
+    --copper: #b9722f; --copper-soft: #f0e2ce; --copper-ink: #7a4a1c;
+    --good: #3f7d53; --good-soft: #dfeee2; --warn: #a5761f; --warn-soft: #f3e7cd;
+    --crit: #a8453b; --crit-soft: #f5dfda; --focus: #2f6e6a;
+    --shadow: 0 1px 2px rgba(23,24,26,0.06), 0 8px 24px -12px rgba(23,24,26,0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #eae6db; --paper: #15181a; --paper-raised: #1d2124; --sand-line: #33383a;
+      --text: #eae6db; --text-soft: #a3a099; --teal: #4fa79e; --teal-soft: #1c2f2d; --teal-ink: #a9d8d1;
+      --copper: #dc9a55; --copper-soft: #2c2318; --copper-ink: #ecc084;
+      --good: #6fbf85; --good-soft: #1c2b1f; --warn: #d9ac53; --warn-soft: #2c2517;
+      --crit: #e0847a; --crit-soft: #2f1e1c; --focus: #6fc2ba;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #eae6db; --paper: #15181a; --paper-raised: #1d2124; --sand-line: #33383a;
+    --text: #eae6db; --text-soft: #a3a099; --teal: #4fa79e; --teal-soft: #1c2f2d; --teal-ink: #a9d8d1;
+    --copper: #dc9a55; --copper-soft: #2c2318; --copper-ink: #ecc084;
+    --good: #6fbf85; --good-soft: #1c2b1f; --warn: #d9ac53; --warn-soft: #2c2517;
+    --crit: #e0847a; --crit-soft: #2f1e1c; --focus: #6fc2ba;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--text); font-family: "IBM Plex Sans", system-ui, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 96px; }
+
+  .setup-banner { background: var(--crit-soft); color: var(--crit); border-bottom: 1px solid var(--crit); padding: 12px 16px; font-size: 0.84rem; text-align: center; display: none; }
+  .setup-banner.show { display: block; }
+
+  header { padding: 40px 0 24px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--sand-line); margin-bottom: 28px; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-soft); display: flex; align-items: center; gap: 10px; }
+  .eyebrow .dot { color: var(--teal); }
+  .eyebrow .dot2 { color: var(--copper); }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 2px 0 0; text-wrap: balance; }
+  header p { margin: 4px 0 0; color: var(--text-soft); max-width: 60ch; font-size: 0.98rem; }
+
+  .card { background: var(--paper-raised); border: 1px solid var(--sand-line); border-radius: 10px; padding: 22px; }
+  .section-title { font-family: "Fraunces", Georgia, serif; font-size: 1.25rem; font-weight: 600; margin: 0 0 4px; }
+  .section-sub { color: var(--text-soft); font-size: 0.88rem; margin: 0 0 18px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-soft); }
+  select, input[type="text"] {
+    font-family: inherit; font-size: 0.95rem; color: var(--text); background: var(--paper);
+    border: 1px solid var(--sand-line); border-radius: 7px; padding: 10px 12px; width: 100%;
+  }
+  .btn-teal { background: var(--teal); color: #fdfdfb; }
+  .btn-teal:hover { background: var(--teal-ink); }
+
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  .product-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--sand-line); border-radius: 9px; padding: 12px 14px; background: var(--paper); margin-bottom: 8px; }
+  .product-row.inactive { opacity: 0.5; }
+  .product-row-main { display: flex; flex-direction: column; gap: 3px; }
+  .product-row-name { font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .product-row-meta { font-size: 0.78rem; color: var(--text-soft); }
+  .product-row-actions { display: flex; gap: 8px; align-items: center; flex: none; }
+  .product-brand-tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+  .product-brand-tag.marea { background: var(--teal-soft); color: var(--teal-ink); }
+  .product-brand-tag.variante { background: var(--copper-soft); color: var(--copper-ink); }
+
+  .board-controls { display: flex; flex-direction: column; gap: 16px; }
+  .stock-group-label { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 8px; }
+  .stock-group-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stock-toggle { display: flex; align-items: center; gap: 10px; border: 1px solid var(--sand-line); border-radius: 9px; padding: 10px 14px; background: var(--paper); font-size: 0.84rem; }
+  .switch { position: relative; width: 36px; height: 20px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .track { position: absolute; inset: 0; background: var(--sand-line); border-radius: 100px; transition: background 0.15s; cursor: pointer; }
+  .switch .track::before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: var(--paper-raised); border-radius: 50%; transition: transform 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+  .switch input:checked + .track { background: var(--good); }
+  .switch input:checked + .track::before { transform: translateX(16px); }
+
+  .board-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 32px; }
+  .board-head-actions { display: flex; align-items: center; gap: 12px; }
+  .live-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--good); font-weight: 600; }
+  .live-dot::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); animation: pulse 2s infinite; }
+  @media (prefers-reduced-motion: reduce) { .live-dot::before { animation: none; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .btn { font-family: inherit; font-weight: 600; font-size: 0.88rem; border-radius: 7px; padding: 8px 16px; border: 1px solid transparent; cursor: pointer; }
+  .btn-ghost { background: transparent; border-color: var(--sand-line); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--text-soft); }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .copy-toast { font-size: 0.78rem; color: var(--good); opacity: 0; transition: opacity 0.2s; }
+  .copy-toast.show { opacity: 1; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--sand-line); border-radius: 10px; margin-top: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 860px; }
+  thead th { text-align: left; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); font-weight: 600; padding: 12px 16px; background: var(--paper-raised); border-bottom: 1px solid var(--sand-line); white-space: nowrap; }
+  tbody td { padding: 14px 16px; border-bottom: 1px solid var(--sand-line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--paper-raised); }
+  .cell-client { font-weight: 600; }
+  .cell-contact { color: var(--text-soft); font-size: 0.8rem; margin-top: 2px; }
+  .cell-addr { color: var(--text-soft); font-size: 0.82rem; max-width: 220px; }
+  .cell-date { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cell-items { max-width: 260px; }
+  .item-chip { display: inline-block; font-size: 0.76rem; background: var(--paper); border: 1px solid var(--sand-line); border-radius: 5px; padding: 2px 7px; margin: 2px 4px 2px 0; }
+  .status-select { font-family: inherit; font-size: 0.78rem; font-weight: 600; border-radius: 100px; padding: 4px 10px; border: 1px solid transparent; cursor: pointer; }
+  .status-select.pendiente { background: var(--warn-soft); color: var(--warn); }
+  .status-select.confirmado { background: var(--teal-soft); color: var(--teal-ink); }
+  .status-select.entregado { background: var(--good-soft); color: var(--good); }
+  .empty-row td { color: var(--text-soft); font-style: italic; text-align: center; padding: 28px 16px; }
+
+  .copy-cell-btn { background: none; border: 1px solid var(--sand-line); border-radius: 6px; padding: 5px 10px; font-size: 0.76rem; font-family: inherit; color: var(--text-soft); cursor: pointer; white-space: nowrap; }
+  .copy-cell-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .copy-cell-btn.copied { border-color: var(--good); color: var(--good); }
+
+  .copy-overlay { position: fixed; inset: 0; background: rgba(23,24,26,0.5); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
+  .copy-overlay.show { display: flex; }
+  .copy-overlay-box { background: var(--paper-raised); border: 1px solid var(--sand-line); border-radius: 10px; padding: 20px; max-width: 560px; width: 100%; box-shadow: var(--shadow); }
+  .copy-overlay-box p { margin: 0 0 10px; font-size: 0.86rem; color: var(--text-soft); }
+  .copy-overlay-box textarea { width: 100%; min-height: 140px; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; }
+  .copy-overlay-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+
+  footer.note { margin-top: 40px; font-size: 0.8rem; color: var(--text-soft); border-top: 1px solid var(--sand-line); padding-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="setup-banner" id="setupBanner">Este tablero aún no está conectado a la base de datos — falta pegar la configuración de Firebase en el archivo. Ver instrucciones adjuntas.</div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="dot">●</span> Marea Negra <span class="dot2">●</span> Variante — Interno</div>
+    <h1>Tablero de pedidos</h1>
+    <p>Solo para el equipo — no compartir este link. Los pedidos del portal público llegan aquí en tiempo real.</p>
+  </header>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <p class="section-title" style="margin-bottom:4px;">Productos</p>
+        <p class="section-sub" style="margin-bottom:0;">Edita o agrega productos del catálogo — se reflejan al instante en el portal del cliente.</p>
+      </div>
+      <button class="btn btn-teal" id="addProductBtn" type="button">+ Agregar producto</button>
+    </div>
+    <div id="productsList" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
+    <p class="section-title">Disponibilidad de temporada</p>
+    <p class="section-sub">Activa o desactiva lo que no hay ahorita — se refleja al instante en el portal del cliente.</p>
+    <div class="board-controls" id="stockControls"></div>
+  </div>
+
+  <div class="board-head">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <p class="section-title" style="margin-bottom:0;">Pedidos entrantes</p>
+      <span class="live-dot" id="liveDot">en vivo</span>
+    </div>
+    <div class="board-head-actions">
+      <span class="copy-toast" id="copyAllToast">Copiado ✓ — pégalo en Marea &amp; Tostador.</span>
+      <button class="btn btn-ghost" id="copyAllBtn" type="button">Copiar pendientes de hoy</button>
+    </div>
+  </div>
+  <p class="section-sub" style="margin-top:6px;">Cada fila se puede copiar para pegarla en <a href="https://mauguguz-bot.github.io/marea-tostador/" target="_blank" rel="noopener">Marea &amp; Tostador</a> — precio, estado de pago y factura quedan en blanco para que los completes allá.</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Dirección</th>
+          <th>Recibido</th>
+          <th>Fecha requerida</th>
+          <th>Artículos</th>
+          <th>Observaciones</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="boardBody"><tr class="empty-row"><td colspan="8">Cargando pedidos…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="copy-overlay" id="productModal">
+    <div class="copy-overlay-box">
+      <p class="section-title" id="productModalTitle" style="margin-bottom:14px;">Agregar producto</p>
+      <div class="field">
+        <label for="pfName">Nombre</label>
+        <input type="text" id="pfName" placeholder="Ej. Bolsa 500 g">
+      </div>
+      <div class="field">
+        <label for="pfBrand">Marca</label>
+        <select id="pfBrand">
+          <option value="marea">Marea Negra</option>
+          <option value="variante">Variante</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pfMeta">Descripción corta</label>
+        <input type="text" id="pfMeta" placeholder="Ej. Cold brew · concentrado">
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem; margin-bottom:10px;">
+        <input type="checkbox" id="pfGrind"> Ofrece opción grano / molido
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem;">
+        <input type="checkbox" id="pfActive" checked> Visible en el portal del cliente
+      </label>
+      <div class="copy-overlay-actions" style="justify-content:space-between;">
+        <button class="btn btn-ghost" id="pfDelete" type="button" style="display:none; color:var(--crit); border-color:var(--crit);">Eliminar</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="pfCancel" type="button">Cancelar</button>
+          <button class="btn btn-teal" id="pfSave" type="button">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copy-overlay" id="copyOverlay">
+    <div class="copy-overlay-box">
+      <p>No pudimos copiar automáticamente (el navegador lo bloqueó). Selecciona el texto y cópialo con Ctrl+C / Cmd+C:</p>
+      <textarea id="copyOverlayText" readonly></textarea>
+      <div class="copy-overlay-actions">
+        <button class="btn btn-ghost" id="copyOverlayClose" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">Tablero interno — Marea Negra × Variante.</footer>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ============================================================
+  // Pega aquí LA MISMA configuración de Firebase que usaste en
+  // portal-cliente.html — deben apuntar al mismo proyecto.
+  // ============================================================
+  var firebaseConfig = {
+    apiKey: "AIzaSyBrkSgKaydtDTQ8a4cxRQr65KSIC8hKFVw",
+    authDomain: "portal-pedidos-ebd9c.firebaseapp.com",
+    projectId: "portal-pedidos-ebd9c",
+    storageBucket: "portal-pedidos-ebd9c.firebasestorage.app",
+    messagingSenderId: "9955667634",
+    appId: "1:9955667634:web:b8b69e2f91196064ba23ab"
+  };
+
+  var configured = firebaseConfig.apiKey.indexOf("PEGA_AQUI") === -1;
+  var db = null;
+  if (configured) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  } else {
+    document.getElementById("setupBanner").classList.add("show");
+    document.getElementById("liveDot").style.display = "none";
+  }
+
+  // El catálogo ahora vive en Firestore (colección "products") para poder
+  // editarlo desde aquí. Esta lista solo se usa UNA VEZ, para sembrar la
+  // base de datos la primera vez que se conecta (si ya tiene productos, no
+  // se toca).
+  var DEFAULT_PRODUCTS = [
+    { brand: "marea", name: "Garrafa 5 L", meta: "Cold brew · concentrado" },
+    { brand: "marea", name: "Bolsa 1 L", meta: "Cold brew" },
+    { brand: "marea", name: "Lata 350 ml — Natural", meta: "Cold brew" },
+    { brand: "marea", name: "Lata 350 ml — Vainilla", meta: "Cold brew" },
+    { brand: "marea", name: "Licor de café", meta: "Botella" },
+    { brand: "variante", name: "Café de la casa — Bolsa 1 kg", meta: "Tolva · grano o molido", hasGrind: true },
+    { brand: "variante", name: "Café de la casa — Bolsa 250 g", meta: "Tolva · grano o molido", hasGrind: true },
+    { brand: "variante", name: "Café de especialidad — 250 g", meta: "Lote especial · grano o molido", hasGrind: true }
+  ];
+
+  var PRODUCTS = []; // en vivo desde Firestore
+  var stock = {};
+  var configStockData = {};
+
+  function recomputeStock() {
+    var next = {};
+    PRODUCTS.forEach(function (p) { next[p.id] = configStockData[p.id] !== false; });
+    stock = next;
+  }
+
+  function seedDefaultProductsIfEmpty() {
+    db.collection("products").limit(1).get().then(function (snap) {
+      if (!snap.empty) return;
+      var batch = db.batch();
+      DEFAULT_PRODUCTS.forEach(function (p) {
+        var ref = db.collection("products").doc();
+        batch.set(ref, {
+          name: p.name, brand: p.brand, meta: p.meta || "", hasGrind: !!p.hasGrind, activo: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      return batch.commit();
+    }).catch(function (err) { console.error("No se pudo sembrar el catálogo inicial:", err); });
+  }
+
+  var ORDERS = []; // se llena en vivo desde Firestore
+  var editingProductId = null;
+
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  // Fecha y hora en que Firebase recibió el pedido (no la fecha que pidió el cliente).
+  // Mientras el reloj del servidor no se confirma (el pedido acaba de enviarse desde
+  // este mismo tablero) createdAt llega null por un instante — se muestra "justo ahora".
+  function formatReceivedAt(createdAt) {
+    if (!createdAt || typeof createdAt.toDate !== "function") return "justo ahora";
+    var d = createdAt.toDate();
+    return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" }) + ", " +
+      d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // ---------- disponibilidad ----------
+  function renderStockControls() {
+    var box = document.getElementById("stockControls");
+    box.innerHTML = "";
+    ["marea", "variante"].forEach(function (brand) {
+      var group = el("div", "stock-group");
+      group.appendChild(el("div", "stock-group-label", brand === "marea" ? "Marea Negra" : "Variante"));
+      var row = el("div", "stock-group-row");
+      PRODUCTS.filter(function (p) { return p.brand === brand; }).forEach(function (p) {
+        var wrap = el("label", "stock-toggle");
+        var sw = el("span", "switch");
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = stock[p.id];
+        input.disabled = !configured;
+        input.addEventListener("change", function () {
+          stock[p.id] = input.checked;
+          if (configured) {
+            var patch = {};
+            patch[p.id] = input.checked;
+            db.collection("config").doc("stock").set(patch, { merge: true }).catch(function (err) {
+              alert("No se pudo actualizar disponibilidad: " + err.message);
+            });
+          }
+        });
+        sw.appendChild(input);
+        sw.appendChild(el("span", "track"));
+        wrap.appendChild(sw);
+        wrap.appendChild(document.createTextNode(p.name));
+        row.appendChild(wrap);
+      });
+      group.appendChild(row);
+      box.appendChild(group);
+    });
+  }
+
+  // ---------- catálogo de productos ----------
+  function renderProductsList() {
+    var box = document.getElementById("productsList");
+    box.innerHTML = "";
+    if (PRODUCTS.length === 0) {
+      box.appendChild(el("p", "section-sub", "Todavía no hay productos — agrega el primero."));
+      return;
+    }
+    PRODUCTS.forEach(function (p) {
+      var row = el("div", "product-row" + (p.activo === false ? " inactive" : ""));
+      var main = el("div", "product-row-main");
+      var nameLine = el("div", "product-row-name");
+      nameLine.appendChild(document.createTextNode(p.name));
+      var tag = el("span", "product-brand-tag " + p.brand, p.brand === "marea" ? "Marea Negra" : "Variante");
+      nameLine.appendChild(tag);
+      if (p.activo === false) nameLine.appendChild(el("span", "product-brand-tag", "Oculto"));
+      main.appendChild(nameLine);
+      var metaBits = [];
+      if (p.meta) metaBits.push(p.meta);
+      if (p.hasGrind) metaBits.push("grano / molido");
+      if (metaBits.length) main.appendChild(el("div", "product-row-meta", metaBits.join(" · ")));
+      row.appendChild(main);
+
+      var actions = el("div", "product-row-actions");
+      var editBtn = el("button", "copy-cell-btn", "Editar");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function () { openProductModal(p); });
+      actions.appendChild(editBtn);
+      row.appendChild(actions);
+
+      box.appendChild(row);
+    });
+  }
+
+  function openProductModal(p) {
+    editingProductId = p ? p.id : null;
+    document.getElementById("productModalTitle").textContent = p ? "Editar producto" : "Agregar producto";
+    document.getElementById("pfName").value = p ? p.name : "";
+    document.getElementById("pfBrand").value = p ? p.brand : "marea";
+    document.getElementById("pfMeta").value = p && p.meta ? p.meta : "";
+    document.getElementById("pfGrind").checked = !!(p && p.hasGrind);
+    document.getElementById("pfActive").checked = p ? p.activo !== false : true;
+    document.getElementById("pfDelete").style.display = p ? "inline-block" : "none";
+    document.getElementById("productModal").classList.add("show");
+    document.getElementById("pfName").focus();
+  }
+
+  function closeProductModal() {
+    document.getElementById("productModal").classList.remove("show");
+    editingProductId = null;
+  }
+
+  document.getElementById("addProductBtn").addEventListener("click", function () { openProductModal(null); });
+  document.getElementById("pfCancel").addEventListener("click", closeProductModal);
+
+  document.getElementById("pfSave").addEventListener("click", function () {
+    if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
+    var name = document.getElementById("pfName").value.trim();
+    if (!name) { alert("Ponle un nombre al producto."); return; }
+    var data = {
+      name: name,
+      brand: document.getElementById("pfBrand").value,
+      meta: document.getElementById("pfMeta").value.trim(),
+      hasGrind: document.getElementById("pfGrind").checked,
+      activo: document.getElementById("pfActive").checked
+    };
+    var saveBtn = document.getElementById("pfSave");
+    saveBtn.disabled = true;
+    var promise;
+    if (editingProductId) {
+      promise = db.collection("products").doc(editingProductId).update(data);
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection("products").add(data);
+    }
+    promise.then(function () {
+      saveBtn.disabled = false;
+      closeProductModal();
+    }).catch(function (err) {
+      saveBtn.disabled = false;
+      alert("No se pudo guardar el producto: " + err.message);
+    });
+  });
+
+  document.getElementById("pfDelete").addEventListener("click", function () {
+    if (!editingProductId) return;
+    if (!confirm("¿Eliminar este producto? Ya no aparecerá en el portal del cliente.")) return;
+    var delBtn = document.getElementById("pfDelete");
+    delBtn.disabled = true;
+    db.collection("products").doc(editingProductId).delete().then(function () {
+      delBtn.disabled = false;
+      closeProductModal();
+    }).catch(function (err) {
+      delBtn.disabled = false;
+      alert("No se pudo eliminar el producto: " + err.message);
+    });
+  });
+
+  // ---------- copiar hacia Marea & Tostador ----------
+  function orderToRows(o) {
+    var clientName = o.cliente && o.cliente.nombre ? o.cliente.nombre : "(sin nombre)";
+    return (o.items || []).map(function (it) {
+      var producto = it.meta ? it.producto + " (" + it.meta + ")" : it.producto;
+      var entrega = o.estado === "entregado" ? "Entregado" : "Sin entregar";
+      return [o.fecha || "", clientName, producto, it.cantidad, "", "", "", entrega, "No", o.observaciones || ""].join("\t");
+    });
+  }
+
+  function copyToClipboard(text, toastEl) {
+    function showToast() {
+      if (!toastEl) return;
+      toastEl.classList.add("show");
+      setTimeout(function () { toastEl.classList.remove("show"); }, 2200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showToast).catch(function () { openCopyOverlay(text); });
+    } else {
+      openCopyOverlay(text);
+    }
+  }
+  function openCopyOverlay(text) {
+    var overlay = document.getElementById("copyOverlay");
+    var ta = document.getElementById("copyOverlayText");
+    ta.value = text;
+    overlay.classList.add("show");
+    ta.focus();
+    ta.select();
+  }
+  document.getElementById("copyOverlayClose").addEventListener("click", function () {
+    document.getElementById("copyOverlay").classList.remove("show");
+  });
+
+  document.getElementById("copyAllBtn").addEventListener("click", function () {
+    var rows = ORDERS.filter(function (o) { return o.estado === "pendiente"; }).reduce(function (acc, o) {
+      return acc.concat(orderToRows(o));
+    }, []);
+    if (rows.length === 0) { alert("No hay pedidos pendientes por copiar."); return; }
+    copyToClipboard(rows.join("\n"), document.getElementById("copyAllToast"));
+  });
+
+  // ---------- tablero ----------
+  function renderBoard() {
+    var body = document.getElementById("boardBody");
+    body.innerHTML = "";
+    if (ORDERS.length === 0) {
+      body.appendChild(el("tr", "empty-row", '<td colspan="8">Todavía no llegan pedidos.</td>'));
+      return;
+    }
+    ORDERS.forEach(function (o) {
+      var tr = el("tr");
+      var clientTd = el("td");
+      clientTd.appendChild(el("div", "cell-client", (o.cliente && o.cliente.nombre) || "(sin nombre)"));
+      var contactBits = [];
+      if (o.cliente && o.cliente.telefono) contactBits.push(o.cliente.telefono);
+      if (o.cliente && o.cliente.correo) contactBits.push(o.cliente.correo);
+      if (contactBits.length) clientTd.appendChild(el("div", "cell-contact", contactBits.join(" · ")));
+      tr.appendChild(clientTd);
+
+      tr.appendChild(el("td", "cell-addr", (o.cliente && o.cliente.direccion) || ""));
+      tr.appendChild(el("td", "cell-date", formatReceivedAt(o.createdAt)));
+      tr.appendChild(el("td", "cell-date", o.fecha || "—"));
+
+      var itemsTd = el("td", "cell-items");
+      (o.items || []).forEach(function (it) {
+        var label = it.cantidad + "× " + it.producto + (it.meta ? " (" + it.meta + ")" : "");
+        itemsTd.appendChild(el("span", "item-chip", label));
+      });
+      tr.appendChild(itemsTd);
+
+      tr.appendChild(el("td", "cell-addr", o.observaciones || "—"));
+
+      var statusTd = el("td");
+      var sel = document.createElement("select");
+      sel.className = "status-select " + o.estado;
+      ["pendiente", "confirmado", "entregado"].forEach(function (s) {
+        var opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+        if (s === o.estado) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener("change", function () {
+        sel.className = "status-select " + sel.value;
+        if (configured && o.id) {
+          db.collection("orders").doc(o.id).update({ estado: sel.value }).catch(function (err) {
+            alert("No se pudo actualizar el estado: " + err.message);
+          });
+        }
+      });
+      statusTd.appendChild(sel);
+      tr.appendChild(statusTd);
+
+      var copyTd = el("td");
+      var copyBtn = el("button", "copy-cell-btn", "Copiar");
+      copyBtn.type = "button";
+      copyBtn.addEventListener("click", function () {
+        copyToClipboard(orderToRows(o).join("\n"));
+        copyBtn.textContent = "Copiado ✓";
+        copyBtn.classList.add("copied");
+        setTimeout(function () { copyBtn.textContent = "Copiar"; copyBtn.classList.remove("copied"); }, 2200);
+      });
+      copyTd.appendChild(copyBtn);
+      tr.appendChild(copyTd);
+
+      body.appendChild(tr);
+    });
+  }
+
+  renderProductsList();
+  renderStockControls();
+  renderBoard();
+
+  if (configured) {
+    seedDefaultProductsIfEmpty();
+
+    db.collection("products").onSnapshot(function (snap) {
+      var list = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      });
+      list.sort(function (a, b) {
+        if (a.brand !== b.brand) return a.brand === "marea" ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "");
+      });
+      PRODUCTS = list;
+      recomputeStock();
+      renderProductsList();
+      renderStockControls();
+    }, function (err) {
+      document.getElementById("productsList").innerHTML = '<p class="section-sub">Error cargando productos: ' + err.message + "</p>";
+    });
+
+    db.collection("config").doc("stock").onSnapshot(function (snap) {
+      configStockData = snap.exists ? snap.data() : {};
+      recomputeStock();
+      renderStockControls();
+    });
+
+    db.collection("orders").orderBy("createdAt", "desc").limit(200).onSnapshot(function (snap) {
+      ORDERS = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      });
+      renderBoard();
+    }, function (err) {
+      document.getElementById("boardBody").innerHTML = '<tr class="empty-row"><td colspan="8">Error cargando pedidos: ' + err.message + "</td></tr>";
+    });
+  }
+})();
+</script>
+</body>
+</html>
