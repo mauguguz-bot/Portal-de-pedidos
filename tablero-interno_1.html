@@ -55,10 +55,18 @@
 
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
   .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-soft); }
-  select, input[type="text"] {
+  select, input[type="text"], input[type="date"] {
     font-family: inherit; font-size: 0.95rem; color: var(--text); background: var(--paper);
     border: 1px solid var(--sand-line); border-radius: 7px; padding: 10px 12px; width: 100%;
   }
+
+  .date-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .date-filter-btn { font-family: inherit; font-weight: 600; font-size: 0.82rem; border-radius: 100px; padding: 7px 14px; border: 1px solid var(--sand-line); background: var(--paper); color: var(--text-soft); cursor: pointer; }
+  .date-filter-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .date-filter-btn.active { background: var(--teal); border-color: var(--teal); color: #fdfdfb; }
+  .date-filter-sep { width: 1px; align-self: stretch; background: var(--sand-line); margin: 0 4px; }
+  .date-filter-bar input[type="date"] { width: auto; padding: 7px 10px; font-size: 0.82rem; }
+  .date-filter-to { font-size: 0.8rem; color: var(--text-soft); }
   .btn-teal { background: var(--teal); color: #fdfdfb; }
   .btn-teal:hover { background: var(--teal-ink); }
 
@@ -171,6 +179,19 @@
     </div>
   </div>
   <p class="section-sub" style="margin-top:6px;">Cada fila se puede copiar para pegarla en <a href="https://mauguguz-bot.github.io/marea-tostador/" target="_blank" rel="noopener">Marea &amp; Tostador</a> — precio, estado de pago y factura quedan en blanco para que los completes allá.</p>
+
+  <div class="date-filter-bar" id="dateFilterBar">
+    <button class="date-filter-btn" data-range="hoy" type="button">Hoy</button>
+    <button class="date-filter-btn" data-range="semana" type="button">Esta semana</button>
+    <button class="date-filter-btn" data-range="mes" type="button">Este mes</button>
+    <button class="date-filter-btn active" data-range="todos" type="button">Todos</button>
+    <span class="date-filter-sep"></span>
+    <input type="date" id="filterFrom">
+    <span class="date-filter-to">a</span>
+    <input type="date" id="filterTo">
+    <button class="btn btn-ghost" id="filterApplyBtn" type="button">Aplicar rango</button>
+  </div>
+  <p class="section-sub" id="filterCount" style="margin-top:8px; margin-bottom:0;"></p>
 
   <div class="table-scroll">
     <table>
@@ -502,15 +523,96 @@
     copyToClipboard(rows.join("\n"), document.getElementById("copyAllToast"));
   });
 
+  // ---------- filtro de fechas (sobre "Recibido") ----------
+  var dateFilterMode = "todos"; // hoy | semana | mes | todos | custom
+  var dateFilterFrom = null; // Date, solo para "custom"
+  var dateFilterTo = null; // Date, solo para "custom"
+
+  function startOfDay(d) { var r = new Date(d); r.setHours(0, 0, 0, 0); return r; }
+  function endOfDay(d) { var r = new Date(d); r.setHours(23, 59, 59, 999); return r; }
+  function startOfWeek(d) { var day = d.getDay(); var diff = day === 0 ? -6 : 1 - day; var r = new Date(d); r.setDate(d.getDate() + diff); return startOfDay(r); }
+  function endOfWeek(d) { var s = startOfWeek(d); var r = new Date(s); r.setDate(s.getDate() + 6); return endOfDay(r); }
+  function startOfMonth(d) { return startOfDay(new Date(d.getFullYear(), d.getMonth(), 1)); }
+  function endOfMonth(d) { return endOfDay(new Date(d.getFullYear(), d.getMonth() + 1, 0)); }
+
+  // Fecha real del pedido para filtrar: la de Firestore (createdAt), o "ahora"
+  // si todavía no se confirma el timestamp del servidor (recién enviado).
+  function getOrderDate(o) {
+    if (o.createdAt && typeof o.createdAt.toDate === "function") return o.createdAt.toDate();
+    return new Date();
+  }
+
+  function currentDateRange() {
+    var now = new Date();
+    if (dateFilterMode === "hoy") return { from: startOfDay(now), to: endOfDay(now) };
+    if (dateFilterMode === "semana") return { from: startOfWeek(now), to: endOfWeek(now) };
+    if (dateFilterMode === "mes") return { from: startOfMonth(now), to: endOfMonth(now) };
+    if (dateFilterMode === "custom") {
+      return {
+        from: dateFilterFrom ? startOfDay(dateFilterFrom) : null,
+        to: dateFilterTo ? endOfDay(dateFilterTo) : null
+      };
+    }
+    return null; // "todos"
+  }
+
+  function filteredOrders() {
+    var range = currentDateRange();
+    if (!range) return ORDERS;
+    return ORDERS.filter(function (o) {
+      var d = getOrderDate(o);
+      if (range.from && d < range.from) return false;
+      if (range.to && d > range.to) return false;
+      return true;
+    });
+  }
+
+  document.querySelectorAll(".date-filter-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      dateFilterMode = btn.dataset.range;
+      dateFilterFrom = null;
+      dateFilterTo = null;
+      document.getElementById("filterFrom").value = "";
+      document.getElementById("filterTo").value = "";
+      document.querySelectorAll(".date-filter-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      renderBoard();
+    });
+  });
+
+  document.getElementById("filterApplyBtn").addEventListener("click", function () {
+    var fromVal = document.getElementById("filterFrom").value;
+    var toVal = document.getElementById("filterTo").value;
+    if (!fromVal && !toVal) { alert("Elige al menos una fecha (desde o hasta) para aplicar el rango."); return; }
+    dateFilterFrom = fromVal ? new Date(fromVal + "T00:00:00") : null;
+    dateFilterTo = toVal ? new Date(toVal + "T00:00:00") : null;
+    dateFilterMode = "custom";
+    document.querySelectorAll(".date-filter-btn").forEach(function (b) { b.classList.remove("active"); });
+    renderBoard();
+  });
+
   // ---------- tablero ----------
   function renderBoard() {
     var body = document.getElementById("boardBody");
     body.innerHTML = "";
+    var list = filteredOrders();
+
+    var countEl = document.getElementById("filterCount");
+    if (countEl) {
+      countEl.textContent = dateFilterMode === "todos"
+        ? ""
+        : "Mostrando " + list.length + " de " + ORDERS.length + " pedidos.";
+    }
+
     if (ORDERS.length === 0) {
       body.appendChild(el("tr", "empty-row", '<td colspan="8">Todavía no llegan pedidos.</td>'));
       return;
     }
-    ORDERS.forEach(function (o) {
+    if (list.length === 0) {
+      body.appendChild(el("tr", "empty-row", '<td colspan="8">No hay pedidos en este rango de fechas.</td>'));
+      return;
+    }
+    list.forEach(function (o) {
       var tr = el("tr");
       var clientTd = el("td");
       clientTd.appendChild(el("div", "cell-client", (o.cliente && o.cliente.nombre) || "(sin nombre)"));
