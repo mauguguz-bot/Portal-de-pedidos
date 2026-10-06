@@ -55,10 +55,12 @@
 
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
   .field label { font-size: 0.82rem; font-weight: 600; color: var(--text-soft); }
-  select, input[type="text"], input[type="date"] {
+  select, input[type="text"], input[type="date"], input[type="number"] {
     font-family: inherit; font-size: 0.95rem; color: var(--text); background: var(--paper);
     border: 1px solid var(--sand-line); border-radius: 7px; padding: 10px 12px; width: 100%;
   }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
 
   .date-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
   .date-filter-btn { font-family: inherit; font-weight: 600; font-size: 0.82rem; border-radius: 100px; padding: 7px 14px; border: 1px solid var(--sand-line); background: var(--paper); color: var(--text-soft); cursor: pointer; }
@@ -129,6 +131,31 @@
   .copy-cell-btn { background: none; border: 1px solid var(--sand-line); border-radius: 6px; padding: 5px 10px; font-size: 0.76rem; font-family: inherit; color: var(--text-soft); cursor: pointer; white-space: nowrap; }
   .copy-cell-btn:hover { border-color: var(--teal); color: var(--teal); }
   .copy-cell-btn.copied { border-color: var(--good); color: var(--good); }
+  .copy-cell-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .copy-cell-btn:disabled:hover { border-color: var(--sand-line); color: var(--text-soft); }
+
+  .product-row-order { display: flex; flex-direction: column; gap: 2px; flex: none; }
+  .order-btn { background: none; border: 1px solid var(--sand-line); border-radius: 5px; width: 24px; height: 20px; font-size: 0.7rem; line-height: 1; color: var(--text-soft); cursor: pointer; padding: 0; }
+  .order-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .order-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .order-btn:disabled:hover { border-color: var(--sand-line); color: var(--text-soft); }
+
+  .product-thumb { width: 40px; height: 40px; border-radius: 7px; object-fit: cover; flex: none; border: 1px solid var(--sand-line); background: var(--paper); }
+
+  .photo-upload { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .photo-upload-box { width: 96px; height: 96px; border: 1px dashed var(--sand-line); border-radius: 9px; background: var(--paper); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; flex: none; }
+  .photo-upload-box:hover { border-color: var(--teal); }
+  .photo-upload-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .photo-upload-placeholder { font-size: 0.68rem; color: var(--text-soft); text-align: center; padding: 6px; line-height: 1.3; }
+  .photo-upload-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .photo-upload-box.wide { width: 220px; height: 124px; }
+
+  .banner-row { display: flex; align-items: center; gap: 12px; border: 1px solid var(--sand-line); border-radius: 9px; padding: 10px 14px; background: var(--paper); margin-bottom: 8px; }
+  .banner-row.inactive { opacity: 0.5; }
+  .banner-thumb { width: 72px; height: 40px; border-radius: 6px; object-fit: cover; flex: none; border: 1px solid var(--sand-line); background: var(--paper-raised); }
+  .banner-row-main { flex: 1; min-width: 0; }
+  .banner-row-caption { font-weight: 600; font-size: 0.88rem; }
+  .banner-row-meta { font-size: 0.76rem; color: var(--text-soft); margin-top: 2px; }
 
   .copy-overlay { position: fixed; inset: 0; background: rgba(23,24,26,0.5); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
   .copy-overlay.show { display: flex; }
@@ -154,8 +181,19 @@
   <div class="card">
     <div class="card-head">
       <div>
+        <p class="section-title" style="margin-bottom:4px;">Carrusel informativo</p>
+        <p class="section-sub" style="margin-bottom:0;">Imágenes para avisos, productos nuevos, cursos, etc. — se muestran arriba del todo en el portal del cliente.</p>
+      </div>
+      <button class="btn btn-teal" id="addBannerBtn" type="button">+ Agregar imagen</button>
+    </div>
+    <div id="bannersList" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
+    <div class="card-head">
+      <div>
         <p class="section-title" style="margin-bottom:4px;">Productos</p>
-        <p class="section-sub" style="margin-bottom:0;">Edita o agrega productos del catálogo — se reflejan al instante en el portal del cliente.</p>
+        <p class="section-sub" style="margin-bottom:0;">Edita o agrega productos del catálogo, y usa las flechas para ordenar cómo aparecen en el portal del cliente — se refleja al instante.</p>
       </div>
       <button class="btn btn-teal" id="addProductBtn" type="button">+ Agregar producto</button>
     </div>
@@ -211,12 +249,59 @@
     </table>
   </div>
 
+  <div class="copy-overlay" id="bannerModal">
+    <div class="copy-overlay-box">
+      <p class="section-title" id="bannerModalTitle" style="margin-bottom:14px;">Agregar imagen</p>
+      <div class="field">
+        <label>Imagen</label>
+        <div class="photo-upload">
+          <div class="photo-upload-box wide" id="bfPhotoBox">
+            <span class="photo-upload-placeholder" id="bfPhotoPlaceholder">Sin imagen<br>Toca para subir</span>
+            <img id="bfPhotoPreview" alt="">
+          </div>
+          <div class="photo-upload-actions">
+            <span class="section-sub" style="margin:0; font-size:0.74rem; max-width:200px;">Recomendado: 1200×675 px, horizontal (16:9) — se ajusta sola.</span>
+          </div>
+        </div>
+        <input type="file" id="bfPhotoFile" accept="image/*" style="display:none;">
+      </div>
+      <div class="field">
+        <label for="bfCaption">Texto (opcional)</label>
+        <input type="text" id="bfCaption" placeholder="Ej. Nuevo: curso de barismo en noviembre">
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem;">
+        <input type="checkbox" id="bfActive" checked> Visible en el portal del cliente
+      </label>
+      <div class="copy-overlay-actions" style="justify-content:space-between; margin-top:14px;">
+        <button class="btn btn-ghost" id="bfDelete" type="button" style="display:none; color:var(--crit); border-color:var(--crit);">Eliminar</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="bfCancel" type="button">Cancelar</button>
+          <button class="btn btn-teal" id="bfSave" type="button">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="copy-overlay" id="productModal">
     <div class="copy-overlay-box">
       <p class="section-title" id="productModalTitle" style="margin-bottom:14px;">Agregar producto</p>
       <div class="field">
         <label for="pfName">Nombre</label>
         <input type="text" id="pfName" placeholder="Ej. Bolsa 500 g">
+      </div>
+      <div class="field">
+        <label>Foto (opcional)</label>
+        <div class="photo-upload">
+          <div class="photo-upload-box" id="pfPhotoBox">
+            <span class="photo-upload-placeholder" id="pfPhotoPlaceholder">Sin foto<br>Toca para subir</span>
+            <img id="pfPhotoPreview" alt="">
+          </div>
+          <div class="photo-upload-actions">
+            <button class="btn btn-ghost" id="pfPhotoRemove" type="button" style="display:none;">Quitar foto</button>
+            <span class="section-sub" style="margin:0; font-size:0.74rem; max-width:220px;">Recomendado: foto cuadrada — se ajusta sola a 600×600 px.</span>
+          </div>
+        </div>
+        <input type="file" id="pfPhotoFile" accept="image/*" style="display:none;">
       </div>
       <div class="field">
         <label for="pfBrand">Marca</label>
@@ -229,6 +314,17 @@
         <label for="pfMeta">Descripción corta</label>
         <input type="text" id="pfMeta" placeholder="Ej. Cold brew · concentrado">
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="pfPriceRetail">Precio público</label>
+          <input type="number" id="pfPriceRetail" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="pfPriceCafe">Venta a cafeterías</label>
+          <input type="number" id="pfPriceCafe" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <p class="section-sub" style="margin-top:-6px; margin-bottom:14px; font-size:0.74rem;">Solo para uso interno — nunca se muestran en el portal del cliente.</p>
       <label style="display:flex; align-items:center; gap:8px; font-size:0.86rem; margin-bottom:10px;">
         <input type="checkbox" id="pfGrind"> Ofrece opción grano / molido
       </label>
@@ -316,10 +412,13 @@
     db.collection("products").limit(1).get().then(function (snap) {
       if (!snap.empty) return;
       var batch = db.batch();
+      var brandCounters = {};
       DEFAULT_PRODUCTS.forEach(function (p) {
         var ref = db.collection("products").doc();
+        var n = brandCounters[p.brand] || 0;
+        brandCounters[p.brand] = n + 1;
         batch.set(ref, {
-          name: p.name, brand: p.brand, meta: p.meta || "", hasGrind: !!p.hasGrind, activo: true,
+          name: p.name, brand: p.brand, meta: p.meta || "", hasGrind: !!p.hasGrind, activo: true, order: n,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       });
@@ -329,6 +428,9 @@
 
   var ORDERS = []; // se llena en vivo desde Firestore
   var editingProductId = null;
+  var BANNERS = []; // en vivo desde Firestore (colección "banners")
+  var editingBannerId = null;
+  var pendingBannerPhoto = undefined; // undefined = sin cambios, null = quitar, string = nueva foto
 
   function el(tag, cls, html) {
     var e = document.createElement(tag);
@@ -393,6 +495,33 @@
     }
     PRODUCTS.forEach(function (p) {
       var row = el("div", "product-row" + (p.activo === false ? " inactive" : ""));
+
+      var brandList = PRODUCTS.filter(function (x) { return x.brand === p.brand; });
+      var idx = brandList.indexOf(p);
+
+      var orderBox = el("div", "product-row-order");
+      var upBtn = el("button", "order-btn", "▲");
+      upBtn.type = "button";
+      upBtn.title = "Subir";
+      upBtn.disabled = idx <= 0;
+      upBtn.addEventListener("click", function () { moveProduct(p, -1); });
+      var downBtn = el("button", "order-btn", "▼");
+      downBtn.type = "button";
+      downBtn.title = "Bajar";
+      downBtn.disabled = idx >= brandList.length - 1;
+      downBtn.addEventListener("click", function () { moveProduct(p, 1); });
+      orderBox.appendChild(upBtn);
+      orderBox.appendChild(downBtn);
+      row.appendChild(orderBox);
+
+      if (p.photo) {
+        var thumb = document.createElement("img");
+        thumb.className = "product-thumb";
+        thumb.src = p.photo;
+        thumb.alt = "";
+        row.appendChild(thumb);
+      }
+
       var main = el("div", "product-row-main");
       var nameLine = el("div", "product-row-name");
       nameLine.appendChild(document.createTextNode(p.name));
@@ -404,6 +533,10 @@
       if (p.meta) metaBits.push(p.meta);
       if (p.hasGrind) metaBits.push("grano / molido");
       if (metaBits.length) main.appendChild(el("div", "product-row-meta", metaBits.join(" · ")));
+      var priceBits = [];
+      if (typeof p.precioPublico === "number") priceBits.push("Público: $" + p.precioPublico.toFixed(2));
+      if (typeof p.precioCafeterias === "number") priceBits.push("Cafeterías: $" + p.precioCafeterias.toFixed(2));
+      if (priceBits.length) main.appendChild(el("div", "product-row-meta", priceBits.join(" · ")));
       row.appendChild(main);
 
       var actions = el("div", "product-row-actions");
@@ -417,15 +550,40 @@
     });
   }
 
+  // Mueve un producto un lugar arriba (-1) o abajo (+1) dentro de su misma marca.
+  // Renormaliza el campo "order" de todo el grupo de esa marca para que quede
+  // una secuencia limpia 0..n-1, sin importar si antes tenía huecos o faltaba.
+  function moveProduct(p, direction) {
+    if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
+    var brandList = PRODUCTS.filter(function (x) { return x.brand === p.brand; });
+    var idx = brandList.indexOf(p);
+    var swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= brandList.length) return;
+    var batch = db.batch();
+    brandList.forEach(function (item, i) {
+      var newOrder = i;
+      if (i === idx) newOrder = swapIdx;
+      else if (i === swapIdx) newOrder = idx;
+      batch.update(db.collection("products").doc(item.id), { order: newOrder });
+    });
+    batch.commit().catch(function (err) {
+      alert("No se pudo reordenar: " + err.message);
+    });
+  }
+
   function openProductModal(p) {
     editingProductId = p ? p.id : null;
     document.getElementById("productModalTitle").textContent = p ? "Editar producto" : "Agregar producto";
     document.getElementById("pfName").value = p ? p.name : "";
     document.getElementById("pfBrand").value = p ? p.brand : "marea";
     document.getElementById("pfMeta").value = p && p.meta ? p.meta : "";
+    document.getElementById("pfPriceRetail").value = p && typeof p.precioPublico === "number" ? p.precioPublico : "";
+    document.getElementById("pfPriceCafe").value = p && typeof p.precioCafeterias === "number" ? p.precioCafeterias : "";
     document.getElementById("pfGrind").checked = !!(p && p.hasGrind);
     document.getElementById("pfActive").checked = p ? p.activo !== false : true;
     document.getElementById("pfDelete").style.display = p ? "inline-block" : "none";
+    pendingPhoto = undefined;
+    setPhotoPreview(p && p.photo ? p.photo : null);
     document.getElementById("productModal").classList.add("show");
     document.getElementById("pfName").focus();
   }
@@ -433,7 +591,70 @@
   function closeProductModal() {
     document.getElementById("productModal").classList.remove("show");
     editingProductId = null;
+    pendingPhoto = undefined;
   }
+
+  // ---------- foto de producto ----------
+  // undefined = sin cambios, null = quitar la foto, string (dataURL) = foto nueva
+  var pendingPhoto = undefined;
+
+  function setPhotoPreview(photoUrl) {
+    var preview = document.getElementById("pfPhotoPreview");
+    var placeholder = document.getElementById("pfPhotoPlaceholder");
+    var removeBtn = document.getElementById("pfPhotoRemove");
+    if (photoUrl) {
+      preview.src = photoUrl;
+      preview.style.display = "block";
+      placeholder.style.display = "none";
+      removeBtn.style.display = "inline-block";
+    } else {
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      placeholder.style.display = "block";
+      removeBtn.style.display = "none";
+    }
+  }
+
+  // Redimensiona la imagen a un máximo de 600×600 px y la comprime a JPEG
+  // para que quepa cómoda en un documento de Firestore (límite 1 MB).
+  function resizeImageFile(file, maxSize, quality, callback) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        var cw = Math.max(1, Math.round(img.width * scale));
+        var ch = Math.max(1, Math.round(img.height * scale));
+        var canvas = document.createElement("canvas");
+        canvas.width = cw;
+        canvas.height = ch;
+        canvas.getContext("2d").drawImage(img, 0, 0, cw, ch);
+        callback(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = function () { alert("No se pudo leer esa imagen."); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function () { alert("No se pudo leer el archivo."); };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById("pfPhotoBox").addEventListener("click", function () {
+    document.getElementById("pfPhotoFile").click();
+  });
+  document.getElementById("pfPhotoFile").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    this.value = "";
+    if (!file) return;
+    if (file.type.indexOf("image/") !== 0) { alert("Elige un archivo de imagen."); return; }
+    resizeImageFile(file, 600, 0.72, function (dataUrl) {
+      pendingPhoto = dataUrl;
+      setPhotoPreview(dataUrl);
+    });
+  });
+  document.getElementById("pfPhotoRemove").addEventListener("click", function () {
+    pendingPhoto = null;
+    setPhotoPreview(null);
+  });
 
   document.getElementById("addProductBtn").addEventListener("click", function () { openProductModal(null); });
   document.getElementById("pfCancel").addEventListener("click", closeProductModal);
@@ -442,6 +663,12 @@
     if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
     var name = document.getElementById("pfName").value.trim();
     if (!name) { alert("Ponle un nombre al producto."); return; }
+    var retailRaw = document.getElementById("pfPriceRetail").value;
+    var cafeRaw = document.getElementById("pfPriceCafe").value;
+    var retailVal = retailRaw === "" ? null : parseFloat(retailRaw);
+    var cafeVal = cafeRaw === "" ? null : parseFloat(cafeRaw);
+    if (retailVal !== null && isNaN(retailVal)) { alert("El precio público no es válido."); return; }
+    if (cafeVal !== null && isNaN(cafeVal)) { alert("El precio de venta a cafeterías no es válido."); return; }
     var data = {
       name: name,
       brand: document.getElementById("pfBrand").value,
@@ -453,8 +680,15 @@
     saveBtn.disabled = true;
     var promise;
     if (editingProductId) {
+      data.precioPublico = retailVal === null ? firebase.firestore.FieldValue.delete() : retailVal;
+      data.precioCafeterias = cafeVal === null ? firebase.firestore.FieldValue.delete() : cafeVal;
+      if (pendingPhoto === null) data.photo = firebase.firestore.FieldValue.delete();
+      else if (typeof pendingPhoto === "string") data.photo = pendingPhoto;
       promise = db.collection("products").doc(editingProductId).update(data);
     } else {
+      if (retailVal !== null) data.precioPublico = retailVal;
+      if (cafeVal !== null) data.precioCafeterias = cafeVal;
+      if (typeof pendingPhoto === "string") data.photo = pendingPhoto;
       data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       promise = db.collection("products").add(data);
     }
@@ -478,6 +712,166 @@
     }).catch(function (err) {
       delBtn.disabled = false;
       alert("No se pudo eliminar el producto: " + err.message);
+    });
+  });
+
+  // ---------- carrusel informativo ----------
+  function renderBannersList() {
+    var box = document.getElementById("bannersList");
+    box.innerHTML = "";
+    if (BANNERS.length === 0) {
+      box.appendChild(el("p", "section-sub", "Todavía no hay imágenes — agrega la primera."));
+      return;
+    }
+    BANNERS.forEach(function (b, idx) {
+      var row = el("div", "banner-row" + (b.activo === false ? " inactive" : ""));
+
+      var orderBox = el("div", "product-row-order");
+      var upBtn = el("button", "order-btn", "▲");
+      upBtn.type = "button";
+      upBtn.title = "Subir";
+      upBtn.disabled = idx <= 0;
+      upBtn.addEventListener("click", function () { moveBanner(b, -1); });
+      var downBtn = el("button", "order-btn", "▼");
+      downBtn.type = "button";
+      downBtn.title = "Bajar";
+      downBtn.disabled = idx >= BANNERS.length - 1;
+      downBtn.addEventListener("click", function () { moveBanner(b, 1); });
+      orderBox.appendChild(upBtn);
+      orderBox.appendChild(downBtn);
+      row.appendChild(orderBox);
+
+      if (b.photo) {
+        var thumb = document.createElement("img");
+        thumb.className = "banner-thumb";
+        thumb.src = b.photo;
+        thumb.alt = "";
+        row.appendChild(thumb);
+      }
+
+      var main = el("div", "banner-row-main");
+      main.appendChild(el("div", "banner-row-caption", b.caption || "(sin texto)"));
+      main.appendChild(el("div", "banner-row-meta", b.activo === false ? "Oculto" : "Visible en el portal"));
+      row.appendChild(main);
+
+      var actions = el("div", "product-row-actions");
+      var editBtn = el("button", "copy-cell-btn", "Editar");
+      editBtn.type = "button";
+      editBtn.addEventListener("click", function () { openBannerModal(b); });
+      actions.appendChild(editBtn);
+      row.appendChild(actions);
+
+      box.appendChild(row);
+    });
+  }
+
+  function moveBanner(b, direction) {
+    if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
+    var idx = BANNERS.indexOf(b);
+    var swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= BANNERS.length) return;
+    var batch = db.batch();
+    BANNERS.forEach(function (item, i) {
+      var newOrder = i;
+      if (i === idx) newOrder = swapIdx;
+      else if (i === swapIdx) newOrder = idx;
+      batch.update(db.collection("banners").doc(item.id), { order: newOrder });
+    });
+    batch.commit().catch(function (err) {
+      alert("No se pudo reordenar: " + err.message);
+    });
+  }
+
+  function setBannerPhotoPreview(photoUrl) {
+    var preview = document.getElementById("bfPhotoPreview");
+    var placeholder = document.getElementById("bfPhotoPlaceholder");
+    if (photoUrl) {
+      preview.src = photoUrl;
+      preview.style.display = "block";
+      placeholder.style.display = "none";
+    } else {
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      placeholder.style.display = "block";
+    }
+  }
+
+  function openBannerModal(b) {
+    editingBannerId = b ? b.id : null;
+    document.getElementById("bannerModalTitle").textContent = b ? "Editar imagen" : "Agregar imagen";
+    document.getElementById("bfCaption").value = b && b.caption ? b.caption : "";
+    document.getElementById("bfActive").checked = b ? b.activo !== false : true;
+    document.getElementById("bfDelete").style.display = b ? "inline-block" : "none";
+    pendingBannerPhoto = undefined;
+    setBannerPhotoPreview(b && b.photo ? b.photo : null);
+    document.getElementById("bannerModal").classList.add("show");
+  }
+
+  function closeBannerModal() {
+    document.getElementById("bannerModal").classList.remove("show");
+    editingBannerId = null;
+    pendingBannerPhoto = undefined;
+  }
+
+  document.getElementById("bfPhotoBox").addEventListener("click", function () {
+    document.getElementById("bfPhotoFile").click();
+  });
+  document.getElementById("bfPhotoFile").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    this.value = "";
+    if (!file) return;
+    if (file.type.indexOf("image/") !== 0) { alert("Elige un archivo de imagen."); return; }
+    resizeImageFile(file, 1200, 0.72, function (dataUrl) {
+      pendingBannerPhoto = dataUrl;
+      setBannerPhotoPreview(dataUrl);
+    });
+  });
+
+  document.getElementById("addBannerBtn").addEventListener("click", function () { openBannerModal(null); });
+  document.getElementById("bfCancel").addEventListener("click", closeBannerModal);
+
+  document.getElementById("bfSave").addEventListener("click", function () {
+    if (!configured) { alert("El tablero no está conectado a la base de datos todavía."); return; }
+    if (!editingBannerId && typeof pendingBannerPhoto !== "string") {
+      alert("Sube una imagen antes de guardar.");
+      return;
+    }
+    var data = {
+      caption: document.getElementById("bfCaption").value.trim(),
+      activo: document.getElementById("bfActive").checked
+    };
+    var saveBtn = document.getElementById("bfSave");
+    saveBtn.disabled = true;
+    var promise;
+    if (editingBannerId) {
+      if (typeof pendingBannerPhoto === "string") data.photo = pendingBannerPhoto;
+      promise = db.collection("banners").doc(editingBannerId).update(data);
+    } else {
+      data.photo = pendingBannerPhoto;
+      data.order = BANNERS.length;
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      promise = db.collection("banners").add(data);
+    }
+    promise.then(function () {
+      saveBtn.disabled = false;
+      closeBannerModal();
+    }).catch(function (err) {
+      saveBtn.disabled = false;
+      alert("No se pudo guardar la imagen: " + err.message);
+    });
+  });
+
+  document.getElementById("bfDelete").addEventListener("click", function () {
+    if (!editingBannerId) return;
+    if (!confirm("¿Eliminar esta imagen del carrusel?")) return;
+    var delBtn = document.getElementById("bfDelete");
+    delBtn.disabled = true;
+    db.collection("banners").doc(editingBannerId).delete().then(function () {
+      delBtn.disabled = false;
+      closeBannerModal();
+    }).catch(function (err) {
+      delBtn.disabled = false;
+      alert("No se pudo eliminar la imagen: " + err.message);
     });
   });
 
@@ -674,10 +1068,28 @@
 
   renderProductsList();
   renderStockControls();
+  renderBannersList();
   renderBoard();
 
   if (configured) {
     seedDefaultProductsIfEmpty();
+
+    db.collection("banners").onSnapshot(function (snap) {
+      var list = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      });
+      list.sort(function (a, b) {
+        var ao = typeof a.order === "number" ? a.order : 999999;
+        var bo = typeof b.order === "number" ? b.order : 999999;
+        return ao - bo;
+      });
+      BANNERS = list;
+      renderBannersList();
+    }, function (err) {
+      document.getElementById("bannersList").innerHTML = '<p class="section-sub">Error cargando imágenes: ' + err.message + "</p>";
+    });
 
     db.collection("products").onSnapshot(function (snap) {
       var list = snap.docs.map(function (doc) {
@@ -687,6 +1099,9 @@
       });
       list.sort(function (a, b) {
         if (a.brand !== b.brand) return a.brand === "marea" ? -1 : 1;
+        var ao = typeof a.order === "number" ? a.order : 999999;
+        var bo = typeof b.order === "number" ? b.order : 999999;
+        if (ao !== bo) return ao - bo;
         return (a.name || "").localeCompare(b.name || "");
       });
       PRODUCTS = list;

@@ -86,14 +86,36 @@
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
 
-  .brand-group { margin-top: 28px; }
+  .brand-group { margin-top: 14px; }
   .brand-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
   .brand-swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .brand-name { font-family: "Fraunces", Georgia, serif; font-size: 1.1rem; font-weight: 600; }
   .brand-tag { font-size: 0.78rem; color: var(--text-soft); }
   .product-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 
+  .brand-tabs { display: flex; gap: 8px; margin-top: 28px; }
+  .brand-tab { flex: 1; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; border: 1px solid var(--sand-line); border-radius: 10px; padding: 14px 10px; background: var(--paper-raised); color: var(--text-soft); cursor: pointer; }
+  .brand-tab-name { font-family: "Fraunces", Georgia, serif; font-size: 1.05rem; font-weight: 600; }
+  .brand-tab-sub { font-size: 0.74rem; }
+  .brand-tab.marea.active { border-color: var(--teal); background: var(--teal-soft); color: var(--teal-ink); }
+  .brand-tab.variante.active { border-color: var(--copper); background: var(--copper-soft); color: var(--copper-ink); }
+
+  .carousel { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--sand-line); background: var(--paper-raised); margin-top: 20px; }
+  .carousel-track { display: flex; transition: transform 0.4s ease; }
+  .carousel-slide { flex: none; width: 100%; aspect-ratio: 16 / 9; position: relative; }
+  .carousel-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .carousel-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 16px 22px; background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0)); color: #fdfdfb; font-size: 0.86rem; font-weight: 600; }
+  .carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(23,24,26,0.45); color: #fdfdfb; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .carousel-arrow:hover { background: rgba(23,24,26,0.7); }
+  .carousel-arrow.prev { left: 10px; }
+  .carousel-arrow.next { right: 10px; }
+  .carousel-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+  .carousel-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.5); border: none; padding: 0; cursor: pointer; }
+  .carousel-dot.active { background: #fdfdfb; }
+
   .product { border: 1px solid var(--sand-line); border-radius: 9px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; background: var(--paper); }
+  .product-head-row { display: flex; gap: 12px; align-items: flex-start; }
+  .product-photo { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex: none; border: 1px solid var(--sand-line); background: var(--paper-raised); }
   .product-name { font-weight: 600; font-size: 0.95rem; }
   .product-meta { font-size: 0.82rem; color: var(--text-soft); margin-top: 2px; }
 
@@ -151,7 +173,14 @@
     <p>Llena tus datos, arma tu pedido y da enviar — lo recibimos directo.</p>
   </header>
 
-  <div class="card">
+  <div class="carousel" id="carousel" style="display:none;">
+    <div class="carousel-track" id="carouselTrack"></div>
+    <button class="carousel-arrow prev" id="carouselPrev" type="button" aria-label="Anterior">‹</button>
+    <button class="carousel-arrow next" id="carouselNext" type="button" aria-label="Siguiente">›</button>
+    <div class="carousel-dots" id="carouselDots"></div>
+  </div>
+
+  <div class="card" style="margin-top:24px;">
     <p class="section-title">Tus datos</p>
     <p class="section-sub">Los usamos solo para este pedido y para contactarte si hace falta.</p>
     <div class="field">
@@ -174,21 +203,22 @@
     </div>
   </div>
 
-  <div class="brand-group" style="margin-top:0;">
-    <div class="brand-head">
-      <span class="brand-swatch" style="background:var(--teal)"></span>
-      <span class="brand-name">Marea Negra</span>
-      <span class="brand-tag">cold brew &amp; licor de café</span>
-    </div>
+  <div class="brand-tabs" id="brandTabs">
+    <button type="button" class="brand-tab marea active" data-brand="marea">
+      <span class="brand-tab-name">Marea Negra</span>
+      <span class="brand-tab-sub">cold brew &amp; licor de café</span>
+    </button>
+    <button type="button" class="brand-tab variante" data-brand="variante">
+      <span class="brand-tab-name">Variante</span>
+      <span class="brand-tab-sub">café tostado</span>
+    </button>
+  </div>
+
+  <div class="brand-group" id="brandGroupMarea">
     <div class="product-list" id="listMarea"></div>
   </div>
 
-  <div class="brand-group">
-    <div class="brand-head">
-      <span class="brand-swatch" style="background:var(--copper)"></span>
-      <span class="brand-name">Variante</span>
-      <span class="brand-tag">café tostado</span>
-    </div>
+  <div class="brand-group" id="brandGroupVariante" style="display:none;">
     <div class="product-list" id="listVariante"></div>
   </div>
 
@@ -269,6 +299,90 @@
     return e;
   }
 
+  // ---------- carrusel informativo ----------
+  var BANNERS = []; // en vivo desde Firestore (colección "banners")
+  var carouselIndex = 0;
+  var carouselTimer = null;
+
+  function renderCarousel() {
+    var carousel = document.getElementById("carousel");
+    var track = document.getElementById("carouselTrack");
+    var dotsBox = document.getElementById("carouselDots");
+    track.innerHTML = "";
+    dotsBox.innerHTML = "";
+
+    if (BANNERS.length === 0) {
+      carousel.style.display = "none";
+      stopCarouselAuto();
+      return;
+    }
+    carousel.style.display = "block";
+    if (carouselIndex >= BANNERS.length) carouselIndex = 0;
+
+    BANNERS.forEach(function (b, i) {
+      var slide = el("div", "carousel-slide");
+      var img = document.createElement("img");
+      img.src = b.photo;
+      img.alt = b.caption || "";
+      slide.appendChild(img);
+      if (b.caption) slide.appendChild(el("div", "carousel-caption", b.caption));
+      track.appendChild(slide);
+
+      if (BANNERS.length > 1) {
+        var dot = el("button", "carousel-dot" + (i === carouselIndex ? " active" : ""));
+        dot.type = "button";
+        dot.addEventListener("click", function () { goToSlide(i); });
+        dotsBox.appendChild(dot);
+      }
+    });
+
+    var multi = BANNERS.length > 1;
+    document.getElementById("carouselPrev").style.display = multi ? "flex" : "none";
+    document.getElementById("carouselNext").style.display = multi ? "flex" : "none";
+    updateCarouselPosition();
+    startCarouselAuto();
+  }
+
+  function updateCarouselPosition() {
+    document.getElementById("carouselTrack").style.transform = "translateX(-" + (carouselIndex * 100) + "%)";
+    document.querySelectorAll("#carouselDots .carousel-dot").forEach(function (d, i) {
+      d.classList.toggle("active", i === carouselIndex);
+    });
+  }
+
+  function goToSlide(i) {
+    carouselIndex = i;
+    updateCarouselPosition();
+    restartCarouselAuto();
+  }
+
+  function startCarouselAuto() {
+    stopCarouselAuto();
+    if (BANNERS.length > 1) {
+      carouselTimer = setInterval(function () {
+        carouselIndex = (carouselIndex + 1) % BANNERS.length;
+        updateCarouselPosition();
+      }, 5000);
+    }
+  }
+  function stopCarouselAuto() {
+    if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null; }
+  }
+  function restartCarouselAuto() { startCarouselAuto(); }
+
+  document.getElementById("carouselPrev").addEventListener("click", function () {
+    if (BANNERS.length === 0) return;
+    carouselIndex = (carouselIndex - 1 + BANNERS.length) % BANNERS.length;
+    updateCarouselPosition();
+    restartCarouselAuto();
+  });
+  document.getElementById("carouselNext").addEventListener("click", function () {
+    if (BANNERS.length === 0) return;
+    carouselIndex = (carouselIndex + 1) % BANNERS.length;
+    updateCarouselPosition();
+    restartCarouselAuto();
+  });
+
   function renderProducts() {
     var listMarea = document.getElementById("listMarea");
     var listVariante = document.getElementById("listVariante");
@@ -279,15 +393,25 @@
       var loadingMsg = configured ? "Cargando catálogo…" : "";
       if (loadingMsg) {
         listMarea.appendChild(el("p", "cart-empty", loadingMsg));
+        listVariante.appendChild(el("p", "cart-empty", loadingMsg));
       }
       return;
     }
 
     PRODUCTS.forEach(function (p) {
       var wrap = el("div", "product" + (p.brand === "variante" ? " brand-copper" : ""));
-      var head = el("div");
-      head.appendChild(el("div", "product-name", p.name));
-      head.appendChild(el("div", "product-meta", p.meta));
+      var head = el("div", "product-head-row");
+      if (p.photo) {
+        var photoImg = document.createElement("img");
+        photoImg.className = "product-photo";
+        photoImg.src = p.photo;
+        photoImg.alt = "";
+        head.appendChild(photoImg);
+      }
+      var textBox = el("div");
+      textBox.appendChild(el("div", "product-name", p.name));
+      textBox.appendChild(el("div", "product-meta", p.meta));
+      head.appendChild(textBox);
       wrap.appendChild(head);
 
       var available = stock[p.id] !== false;
@@ -469,6 +593,9 @@
       }).filter(function (p) { return p.activo !== false; });
       list.sort(function (a, b) {
         if (a.brand !== b.brand) return a.brand === "marea" ? -1 : 1;
+        var ao = typeof a.order === "number" ? a.order : 999999;
+        var bo = typeof b.order === "number" ? b.order : 999999;
+        if (ao !== bo) return ao - bo;
         return (a.name || "").localeCompare(b.name || "");
       });
       PRODUCTS = list;
@@ -481,7 +608,35 @@
       recomputeStock();
       renderProducts();
     }, function () { /* si falla, se queda con todo disponible por defecto */ });
+
+    db.collection("banners").onSnapshot(function (snap) {
+      var list = snap.docs.map(function (doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        return data;
+      }).filter(function (b) { return b.activo !== false; });
+      list.sort(function (a, b) {
+        var ao = typeof a.order === "number" ? a.order : 999999;
+        var bo = typeof b.order === "number" ? b.order : 999999;
+        return ao - bo;
+      });
+      BANNERS = list;
+      renderCarousel();
+    }, function () { /* si falla, no se muestra el carrusel */ });
   }
+
+  // Pestañas de marca — para no hacer tan larga la vista, el cliente ve un
+  // catálogo a la vez. El carrito acumula artículos de ambas marcas igual,
+  // cambiar de pestaña solo cambia qué lista se muestra.
+  document.querySelectorAll(".brand-tab").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var brand = btn.dataset.brand;
+      document.querySelectorAll(".brand-tab").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      document.getElementById("brandGroupMarea").style.display = brand === "marea" ? "" : "none";
+      document.getElementById("brandGroupVariante").style.display = brand === "variante" ? "" : "none";
+    });
+  });
 
   loadRemembered();
   renderProducts();
