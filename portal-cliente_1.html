@@ -114,8 +114,7 @@
   .carousel-dot.active { background: #fdfdfb; }
 
   .product { border: 1px solid var(--sand-line); border-radius: 9px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; background: var(--paper); }
-  .product-head-row { display: flex; gap: 12px; align-items: flex-start; }
-  .product-photo { width: 84px; height: 84px; border-radius: 10px; object-fit: cover; flex: none; border: 1px solid var(--sand-line); background: var(--paper-raised); }
+  .product-photo-banner { grid-column: 1 / -1; width: 100%; height: 190px; object-fit: cover; border-radius: 8px; border: 1px solid var(--sand-line); background: var(--paper-raised); margin-bottom: 2px; }
   .product-name { font-weight: 600; font-size: 0.95rem; }
   .product-meta { font-size: 0.82rem; color: var(--text-soft); margin-top: 2px; }
 
@@ -400,14 +399,14 @@
 
     PRODUCTS.forEach(function (p) {
       var wrap = el("div", "product" + (p.brand === "variante" ? " brand-copper" : ""));
-      var head = el("div", "product-head-row");
       if (p.photo) {
         var photoImg = document.createElement("img");
-        photoImg.className = "product-photo";
+        photoImg.className = "product-photo-banner";
         photoImg.src = p.photo;
         photoImg.alt = "";
-        head.appendChild(photoImg);
+        wrap.appendChild(photoImg);
       }
+      var head = el("div");
       var textBox = el("div");
       textBox.appendChild(el("div", "product-name", p.name));
       textBox.appendChild(el("div", "product-meta", p.meta));
