@@ -165,6 +165,17 @@
   .copy-overlay-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
 
   footer.note { margin-top: 40px; font-size: 0.8rem; color: var(--text-soft); border-top: 1px solid var(--sand-line); padding-top: 16px; }
+
+  .accordion-section { border: 1px solid var(--sand-line); border-radius: 10px; background: var(--paper-raised); margin-bottom: 20px; overflow: hidden; }
+  .accordion-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: inherit; color: inherit; }
+  .accordion-header:hover { background: var(--paper); }
+  .accordion-header-title { font-family: "Fraunces", Georgia, serif; font-size: 1.15rem; font-weight: 600; margin: 0 0 2px; display: flex; align-items: center; }
+  .accordion-header-sub { color: var(--text-soft); font-size: 0.82rem; margin: 0; }
+  .accordion-chevron { font-size: 1.1rem; color: var(--text-soft); flex: none; transition: transform 0.15s; }
+  .accordion-section.open .accordion-chevron { transform: rotate(180deg); }
+  .accordion-body { padding: 0 22px 22px; }
+  .accordion-section.closed .accordion-body { display: none; }
+  .accordion-badge { font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; background: var(--teal-soft); color: var(--teal-ink); border-radius: 100px; padding: 2px 9px; margin-left: 8px; }
 </style>
 </head>
 <body>
@@ -178,75 +189,98 @@
     <p>Solo para el equipo — no compartir este link. Los pedidos del portal público llegan aquí en tiempo real.</p>
   </header>
 
-  <div class="card">
-    <div class="card-head">
+  <div class="accordion-section closed" id="accBanners">
+    <button class="accordion-header" type="button" data-accordion="accBanners">
       <div>
-        <p class="section-title" style="margin-bottom:4px;">Carrusel informativo</p>
-        <p class="section-sub" style="margin-bottom:0;">Imágenes para avisos, productos nuevos, cursos, etc. — se muestran arriba del todo en el portal del cliente.</p>
+        <p class="accordion-header-title">Carrusel informativo</p>
+        <p class="accordion-header-sub">Imágenes para avisos, productos nuevos, cursos, etc. — se muestran arriba del todo en el portal del cliente.</p>
       </div>
-      <button class="btn btn-teal" id="addBannerBtn" type="button">+ Agregar imagen</button>
+      <span class="accordion-chevron">▾</span>
+    </button>
+    <div class="accordion-body">
+      <div class="card-head">
+        <div></div>
+        <button class="btn btn-teal" id="addBannerBtn" type="button">+ Agregar imagen</button>
+      </div>
+      <div id="bannersList" style="margin-top:16px;"></div>
     </div>
-    <div id="bannersList" style="margin-top:16px;"></div>
   </div>
 
-  <div class="card" style="margin-top:24px;">
-    <div class="card-head">
+  <div class="accordion-section closed" id="accProducts">
+    <button class="accordion-header" type="button" data-accordion="accProducts">
       <div>
-        <p class="section-title" style="margin-bottom:4px;">Productos</p>
-        <p class="section-sub" style="margin-bottom:0;">Edita o agrega productos del catálogo, y usa las flechas para ordenar cómo aparecen en el portal del cliente — se refleja al instante.</p>
+        <p class="accordion-header-title">Productos<span class="accordion-badge" id="productsBadge">0</span></p>
+        <p class="accordion-header-sub">Edita o agrega productos del catálogo, y usa las flechas para ordenar cómo aparecen en el portal del cliente — se refleja al instante.</p>
       </div>
-      <button class="btn btn-teal" id="addProductBtn" type="button">+ Agregar producto</button>
-    </div>
-    <div id="productsList" style="margin-top:16px;"></div>
-  </div>
-
-  <div class="card" style="margin-top:24px;">
-    <p class="section-title">Disponibilidad de temporada</p>
-    <p class="section-sub">Activa o desactiva lo que no hay ahorita — se refleja al instante en el portal del cliente.</p>
-    <div class="board-controls" id="stockControls"></div>
-  </div>
-
-  <div class="board-head">
-    <div style="display:flex; align-items:center; gap:14px;">
-      <p class="section-title" style="margin-bottom:0;">Pedidos entrantes</p>
-      <span class="live-dot" id="liveDot">en vivo</span>
-    </div>
-    <div class="board-head-actions">
-      <span class="copy-toast" id="copyAllToast">Copiado ✓ — pégalo en Marea &amp; Tostador.</span>
-      <button class="btn btn-ghost" id="copyAllBtn" type="button">Copiar pendientes de hoy</button>
+      <span class="accordion-chevron">▾</span>
+    </button>
+    <div class="accordion-body">
+      <div class="card-head">
+        <div></div>
+        <button class="btn btn-teal" id="addProductBtn" type="button">+ Agregar producto</button>
+      </div>
+      <div id="productsList" style="margin-top:16px;"></div>
     </div>
   </div>
-  <p class="section-sub" style="margin-top:6px;">Cada fila se puede copiar para pegarla en <a href="https://mauguguz-bot.github.io/marea-tostador/" target="_blank" rel="noopener">Marea &amp; Tostador</a> — precio, estado de pago y factura quedan en blanco para que los completes allá.</p>
 
-  <div class="date-filter-bar" id="dateFilterBar">
-    <button class="date-filter-btn" data-range="hoy" type="button">Hoy</button>
-    <button class="date-filter-btn" data-range="semana" type="button">Esta semana</button>
-    <button class="date-filter-btn" data-range="mes" type="button">Este mes</button>
-    <button class="date-filter-btn active" data-range="todos" type="button">Todos</button>
-    <span class="date-filter-sep"></span>
-    <input type="date" id="filterFrom">
-    <span class="date-filter-to">a</span>
-    <input type="date" id="filterTo">
-    <button class="btn btn-ghost" id="filterApplyBtn" type="button">Aplicar rango</button>
+  <div class="accordion-section closed" id="accStock">
+    <button class="accordion-header" type="button" data-accordion="accStock">
+      <div>
+        <p class="accordion-header-title">Disponibilidad de temporada</p>
+        <p class="accordion-header-sub">Activa o desactiva lo que no hay ahorita — se refleja al instante en el portal del cliente.</p>
+      </div>
+      <span class="accordion-chevron">▾</span>
+    </button>
+    <div class="accordion-body">
+      <div class="board-controls" id="stockControls"></div>
+    </div>
   </div>
-  <p class="section-sub" id="filterCount" style="margin-top:8px; margin-bottom:0;"></p>
 
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Dirección</th>
-          <th>Recibido</th>
-          <th>Fecha requerida</th>
-          <th>Artículos</th>
-          <th>Observaciones</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="boardBody"><tr class="empty-row"><td colspan="8">Cargando pedidos…</td></tr></tbody>
-    </table>
+  <div class="accordion-section open" id="accOrders">
+    <button class="accordion-header" type="button" data-accordion="accOrders">
+      <div>
+        <p class="accordion-header-title">Pedidos entrantes<span class="accordion-badge" id="ordersBadge">0</span> <span class="live-dot" id="liveDot" style="margin-left:10px;">en vivo</span></p>
+        <p class="accordion-header-sub">Cada fila se puede copiar para pegarla en Marea &amp; Tostador — precio, estado de pago y factura quedan en blanco para que los completes allá.</p>
+      </div>
+      <span class="accordion-chevron">▾</span>
+    </button>
+    <div class="accordion-body">
+      <div class="board-head-actions" style="justify-content:flex-end; margin-bottom:10px;">
+        <span class="copy-toast" id="copyAllToast">Copiado ✓ — pégalo en Marea &amp; Tostador.</span>
+        <button class="btn btn-ghost" id="copyAllBtn" type="button">Copiar pendientes de hoy</button>
+      </div>
+
+      <div class="date-filter-bar" id="dateFilterBar">
+        <button class="date-filter-btn" data-range="hoy" type="button">Hoy</button>
+        <button class="date-filter-btn" data-range="semana" type="button">Esta semana</button>
+        <button class="date-filter-btn" data-range="mes" type="button">Este mes</button>
+        <button class="date-filter-btn active" data-range="todos" type="button">Todos</button>
+        <span class="date-filter-sep"></span>
+        <input type="date" id="filterFrom">
+        <span class="date-filter-to">a</span>
+        <input type="date" id="filterTo">
+        <button class="btn btn-ghost" id="filterApplyBtn" type="button">Aplicar rango</button>
+      </div>
+      <p class="section-sub" id="filterCount" style="margin-top:8px; margin-bottom:0;"></p>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Dirección</th>
+              <th>Recibido</th>
+              <th>Fecha requerida</th>
+              <th>Artículos</th>
+              <th>Observaciones</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="boardBody"><tr class="empty-row"><td colspan="8">Cargando pedidos…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div class="copy-overlay" id="bannerModal">
@@ -489,6 +523,8 @@
   function renderProductsList() {
     var box = document.getElementById("productsList");
     box.innerHTML = "";
+    var productsBadge = document.getElementById("productsBadge");
+    if (productsBadge) productsBadge.textContent = String(PRODUCTS.length);
     if (PRODUCTS.length === 0) {
       box.appendChild(el("p", "section-sub", "Todavía no hay productos — agrega el primero."));
       return;
@@ -909,6 +945,22 @@
     document.getElementById("copyOverlay").classList.remove("show");
   });
 
+  // ---------- acordeón de secciones ----------
+  document.querySelectorAll(".accordion-header").forEach(function (header) {
+    header.addEventListener("click", function () {
+      var section = document.getElementById(header.getAttribute("data-accordion"));
+      if (!section) return;
+      var isOpen = section.classList.contains("open");
+      if (isOpen) {
+        section.classList.remove("open");
+        section.classList.add("closed");
+      } else {
+        section.classList.remove("closed");
+        section.classList.add("open");
+      }
+    });
+  });
+
   document.getElementById("copyAllBtn").addEventListener("click", function () {
     var rows = ORDERS.filter(function (o) { return o.estado === "pendiente"; }).reduce(function (acc, o) {
       return acc.concat(orderToRows(o));
@@ -990,6 +1042,12 @@
     var body = document.getElementById("boardBody");
     body.innerHTML = "";
     var list = filteredOrders();
+
+    var ordersBadge = document.getElementById("ordersBadge");
+    if (ordersBadge) {
+      var pendingCount = ORDERS.filter(function (o) { return (o.estado || "pendiente") === "pendiente"; }).length;
+      ordersBadge.textContent = String(pendingCount);
+    }
 
     var countEl = document.getElementById("filterCount");
     if (countEl) {
