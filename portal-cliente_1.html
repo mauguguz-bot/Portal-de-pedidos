@@ -160,6 +160,18 @@
   .error-box.show { display: block; }
 
   footer.note { margin-top: 40px; font-size: 0.8rem; color: var(--text-soft); border-top: 1px solid var(--sand-line); padding-top: 16px; }
+
+  .cutoff-note { background: var(--teal-soft); color: var(--teal-ink); border: 1px solid var(--teal); border-radius: 9px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.45; margin-top: 10px; }
+  .cutoff-note strong { display: block; margin-bottom: 3px; font-size: 0.84rem; }
+  .rush-box { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); border-radius: 9px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.45; margin-top: 10px; display: none; }
+  .rush-box.show { display: block; }
+  .rush-box.confirmed { background: var(--good-soft); color: var(--good); border-color: var(--good); }
+  .rush-box strong { display: block; margin-bottom: 6px; font-size: 0.84rem; }
+  .rush-check { display: flex; align-items: flex-start; gap: 9px; margin: 8px 0; cursor: pointer; }
+  .rush-check input { margin-top: 3px; }
+  .rush-check span { font-weight: 600; }
+  .rush-helper { display: block; margin-top: 4px; color: var(--text-soft); font-weight: 400; }
+  .rush-box.confirmed .rush-helper { color: var(--good); }
 </style>
 </head>
 <body>
@@ -229,6 +241,18 @@
     <div class="field" style="margin-top:16px;">
       <label for="reqDate">Día en que lo necesitas</label>
       <input type="date" id="reqDate">
+      <div class="cutoff-note">
+        <strong>⏱ Pedidos de 9:00 am a 3:00 pm → se entregan mañana.</strong>
+        Después de las 3:00 pm → se entregan pasado mañana.
+      </div>
+      <div class="rush-box" id="rushBox">
+        <strong>⚠ Esta fecha ya no alcanza el horario normal.</strong>
+        <label class="rush-check">
+          <input type="checkbox" id="rushCheck">
+          <span id="rushCheckLabel">Quiero entrega exprés (+$40 de envío)</span>
+        </label>
+        <span class="rush-helper" id="rushHelper"></span>
+      </div>
     </div>
     <div class="field">
       <label for="notes">Observaciones (opcional)</label>
@@ -476,6 +500,60 @@
     });
   }
 
+  // ---------- horario de corte / entrega exprés ----------
+  function toISODate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+  function minNormalDate() {
+    // Pedidos antes de las 3:00 pm (incluye madrugada) => entrega mañana.
+    // Pedidos después de las 3:00 pm => entrega pasado mañana.
+    var now = new Date();
+    var hour = now.getHours() + now.getMinutes() / 60;
+    var leadDays = hour < 15 ? 1 : 2;
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    d.setDate(d.getDate() + leadDays);
+    return d;
+  }
+  function formatDayMonth(isoDate) {
+    var parts = isoDate.split("-");
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    var meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    return d.getDate() + " " + meses[d.getMonth()];
+  }
+  function updateRushState() {
+    var dateInput = document.getElementById("reqDate");
+    var rushBox = document.getElementById("rushBox");
+    var rushCheck = document.getElementById("rushCheck");
+    var rushCheckLabel = document.getElementById("rushCheckLabel");
+    var rushHelper = document.getElementById("rushHelper");
+    var isoVal = dateInput.value;
+    if (!isoVal) {
+      rushBox.classList.remove("show");
+      return;
+    }
+    var chosen = new Date(isoVal + "T00:00:00");
+    var min = minNormalDate();
+    if (chosen.getTime() >= min.getTime()) {
+      rushBox.classList.remove("show");
+      rushCheck.checked = false;
+      return;
+    }
+    rushBox.classList.add("show");
+    rushCheckLabel.textContent = "Quiero entrega exprés para el " + formatDayMonth(isoVal) + " (+$40 de envío)";
+    if (rushCheck.checked) {
+      rushBox.classList.add("confirmed");
+      rushHelper.textContent = "✓ Entrega exprés confirmada — se suman $40 a tu pedido.";
+    } else {
+      rushBox.classList.remove("confirmed");
+      rushHelper.textContent = "Si no marcas esta opción, tu pedido se entrega el " + formatDayMonth(toISODate(min)) + " sin costo extra.";
+    }
+  }
+  document.getElementById("reqDate").addEventListener("change", updateRushState);
+  document.getElementById("rushCheck").addEventListener("change", updateRushState);
+
   function renderCart() {
     var box = document.getElementById("cartItems");
     box.innerHTML = "";
@@ -526,6 +604,10 @@
     var direccion = document.getElementById("ncAddr").value.trim();
     var fecha = document.getElementById("reqDate").value;
     var observaciones = document.getElementById("notes").value.trim();
+    var rushCheck = document.getElementById("rushCheck");
+    if (document.getElementById("rushBox").classList.contains("show") && rushCheck.checked) {
+      observaciones = "⚡ ENTREGA EXPRÉS (+$40) — " + observaciones;
+    }
 
     if (!nombre || !telefono || !direccion) {
       errorBox.textContent = "Completa nombre, teléfono y dirección antes de enviar.";
@@ -564,6 +646,9 @@
       cart = [];
       renderCart();
       document.getElementById("notes").value = "";
+      document.getElementById("reqDate").value = "";
+      document.getElementById("rushCheck").checked = false;
+      updateRushState();
       submitBtn.disabled = false;
       submitBtn.textContent = "Enviar pedido";
     }).catch(function (err) {
