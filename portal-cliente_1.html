@@ -510,11 +510,14 @@
   function minNormalDate() {
     // Pedidos antes de las 3:00 pm (incluye madrugada) => entrega mañana.
     // Pedidos después de las 3:00 pm => entrega pasado mañana.
+    // No se trabaja en domingo => si cae en domingo, se recorre al lunes
+    // (esto automáticamente manda todo pedido del sábado al lunes).
     var now = new Date();
     var hour = now.getHours() + now.getMinutes() / 60;
     var leadDays = hour < 15 ? 1 : 2;
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     d.setDate(d.getDate() + leadDays);
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
     return d;
   }
   function formatDayMonth(isoDate) {
