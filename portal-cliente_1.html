@@ -172,6 +172,9 @@
   .rush-check span { font-weight: 600; }
   .rush-helper { display: block; margin-top: 4px; color: var(--text-soft); font-weight: 400; }
   .rush-box.confirmed .rush-helper { color: var(--good); }
+  .no-sunday-box { background: var(--crit-soft); color: var(--crit); border: 1px solid var(--crit); border-radius: 9px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.45; margin-top: 10px; display: none; }
+  .no-sunday-box.show { display: block; }
+  .no-sunday-box strong { display: block; margin-bottom: 3px; font-size: 0.84rem; }
 </style>
 </head>
 <body>
@@ -252,6 +255,10 @@
           <span id="rushCheckLabel">Quiero entrega exprés (+$40 de envío)</span>
         </label>
         <span class="rush-helper" id="rushHelper"></span>
+      </div>
+      <div class="no-sunday-box" id="noSundayBox">
+        <strong>😕 No entregamos los domingos.</strong>
+        Elige sábado o lunes.
       </div>
     </div>
     <div class="field">
@@ -532,12 +539,22 @@
     var rushCheck = document.getElementById("rushCheck");
     var rushCheckLabel = document.getElementById("rushCheckLabel");
     var rushHelper = document.getElementById("rushHelper");
+    var noSundayBox = document.getElementById("noSundayBox");
     var isoVal = dateInput.value;
     if (!isoVal) {
       rushBox.classList.remove("show");
+      noSundayBox.classList.remove("show");
       return;
     }
     var chosen = new Date(isoVal + "T00:00:00");
+    if (chosen.getDay() === 0) {
+      // No se entrega en domingo bajo ninguna circunstancia (ni pagando exprés).
+      rushBox.classList.remove("show");
+      rushCheck.checked = false;
+      noSundayBox.classList.add("show");
+      return;
+    }
+    noSundayBox.classList.remove("show");
     var min = minNormalDate();
     if (chosen.getTime() >= min.getTime()) {
       rushBox.classList.remove("show");
@@ -612,6 +629,11 @@
       observaciones = "⚡ ENTREGA EXPRÉS (+$40) — " + observaciones;
     }
 
+    if (fecha && new Date(fecha + "T00:00:00").getDay() === 0) {
+      errorBox.textContent = "No entregamos los domingos — elige sábado o lunes.";
+      errorBox.classList.add("show");
+      return;
+    }
     if (!nombre || !telefono || !direccion) {
       errorBox.textContent = "Completa nombre, teléfono y dirección antes de enviar.";
       errorBox.classList.add("show");
