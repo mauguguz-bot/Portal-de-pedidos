@@ -625,12 +625,18 @@
     var fecha = document.getElementById("reqDate").value;
     var observaciones = document.getElementById("notes").value.trim();
     var rushCheck = document.getElementById("rushCheck");
-    if (document.getElementById("rushBox").classList.contains("show") && rushCheck.checked) {
+    var rushBoxEl = document.getElementById("rushBox");
+    if (rushBoxEl.classList.contains("show") && rushCheck.checked) {
       observaciones = "⚡ ENTREGA EXPRÉS (+$40) — " + observaciones;
     }
 
     if (fecha && new Date(fecha + "T00:00:00").getDay() === 0) {
       errorBox.textContent = "No entregamos los domingos — elige sábado o lunes.";
+      errorBox.classList.add("show");
+      return;
+    }
+    if (rushBoxEl.classList.contains("show") && !rushCheck.checked) {
+      errorBox.textContent = "Esta fecha ya no alcanza el horario normal — marca \"Quiero entrega exprés\" para confirmar el cargo extra, o elige otra fecha.";
       errorBox.classList.add("show");
       return;
     }
