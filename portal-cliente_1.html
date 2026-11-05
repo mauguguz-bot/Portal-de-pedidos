@@ -242,7 +242,7 @@
     <div id="cartItems"><p class="cart-empty">Aún no agregas artículos.</p></div>
 
     <div class="field" style="margin-top:16px;">
-      <label for="reqDate">Día en que lo necesitas</label>
+      <label for="reqDate">Día en que lo necesitas *</label>
       <input type="date" id="reqDate">
       <div class="cutoff-note">
         <strong>⏱ Pedidos de 9:00 am a 3:00 pm → se entregan mañana.</strong>
@@ -630,6 +630,11 @@
       observaciones = "⚡ ENTREGA EXPRÉS (+$40) — " + observaciones;
     }
 
+    if (!fecha) {
+      errorBox.textContent = "Selecciona el día en que lo necesitas.";
+      errorBox.classList.add("show");
+      return;
+    }
     if (fecha && new Date(fecha + "T00:00:00").getDay() === 0) {
       errorBox.textContent = "No entregamos los domingos — elige sábado o lunes.";
       errorBox.classList.add("show");
